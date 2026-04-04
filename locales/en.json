@@ -1,0 +1,67 @@
+{
+  "nav": {
+    "home": "Home",
+    "workspace": "3D Workspace",
+    "assets": "Assets"
+  },
+  "common": {
+    "back": "Back",
+    "confirm": "Confirm",
+    "cancel": "Cancel",
+    "loading": "Loading...",
+    "error": "Error",
+    "success": "Success",
+    "language": "Language"
+  },
+  "home": {
+    "title": "3DGenerator",
+    "subtitle": "AI 3D Model Generation Workbench",
+    "hero": "Turn imagination into 3D models",
+    "description": "Generate high-quality 3D models with AI, support custom textures and materials"
+  },
+  "gallery": {
+    "all": "All",
+    "character": "Character",
+    "vehicle": "Vehicle",
+    "animal": "Animal",
+    "architecture": "Architecture",
+    "furniture": "Furniture",
+    "props": "Props",
+    "weapon": "Weapon",
+    "author": "Author",
+    "likes": "Likes"
+  },
+  "generate": {
+    "title": "Generate 3D Model",
+    "promptLabel": "Model Description",
+    "promptPlaceholder": "Describe the 3D model you want to generate...",
+    "quality": "Quality",
+    "qualityStandard": "Standard",
+    "qualityUltra": "Ultra",
+    "texture": "Generate Texture",
+    "version": "Model Version",
+    "generate": "Generate",
+    "generating": "Generating...",
+    "generateButton": "Generate",
+    "characterCount": "Characters"
+  },
+  "history": {
+    "title": "Generation History",
+    "empty": "No generation records yet",
+    "emptyHint": "Go to the generate page to create your first 3D model",
+    "viewModel": "View Model",
+    "deleteConfirm": "Delete this record?",
+    "generatedAt": "Generated at"
+  },
+  "viewer": {
+    "modelInfo": "Model Info",
+    "faces": "Faces",
+    "vertices": "Vertices",
+    "material": "Material",
+    "originalPbr": "Original PBR",
+    "matcapSilver": "Silver Matcap",
+    "whiteClay": "White Clay",
+    "wireframe": "Wireframe",
+    "normal": "Normal"
+  }
+}

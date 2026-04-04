@@ -1,0 +1,67 @@
+{
+  "nav": {
+    "home": "首页",
+    "workspace": "3D工作台",
+    "assets": "素材库"
+  },
+  "common": {
+    "back": "返回",
+    "confirm": "确认",
+    "cancel": "取消",
+    "loading": "加载中...",
+    "error": "错误",
+    "success": "成功",
+    "language": "语言"
+  },
+  "home": {
+    "title": "3DGenerator",
+    "subtitle": "AI 3D模型生成工作台",
+    "hero": "将想象变成3D模型",
+    "description": "使用AI生成高质量3D模型，支持自定义纹理和材质"
+  },
+  "gallery": {
+    "all": "全部",
+    "character": "角色",
+    "vehicle": "车辆",
+    "animal": "动物",
+    "architecture": "建筑",
+    "furniture": "家具",
+    "props": "道具",
+    "weapon": "武器",
+    "author": "作者",
+    "likes": "收藏"
+  },
+  "generate": {
+    "title": "生成3D模型",
+    "promptLabel": "输入模型描述",
+    "promptPlaceholder": "描述你想生成的3D模型...",
+    "quality": "质量",
+    "qualityStandard": "标准",
+    "qualityUltra": "超高清",
+    "texture": "生成纹理",
+    "version": "模型版本",
+    "generate": "生成模型",
+    "generating": "生成中...",
+    "generateButton": "生成",
+    "characterCount": "字符数"
+  },
+  "history": {
+    "title": "生成历史",
+    "empty": "暂无生成记录",
+    "emptyHint": "去生成页面创建你的第一个3D模型吧",
+    "viewModel": "查看模型",
+    "deleteConfirm": "确定删除这条记录？",
+    "generatedAt": "生成于"
+  },
+  "viewer": {
+    "modelInfo": "模型信息",
+    "faces": "面数",
+    "vertices": "顶点数",
+    "material": "材质",
+    "originalPbr": "原始PBR",
+    "matcapSilver": "银色Matcap",
+    "whiteClay": "白色粘土",
+    "wireframe": "线框",
+    "normal": "法线"
+  }
+}
