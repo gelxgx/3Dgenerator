@@ -4,12 +4,13 @@
  *
  * 实现原理（逆向自 Tripo Studio）：
  * 1. 用 Three.js 加载 GLB 模型，渲染一帧截图后立即销毁 renderer（零持续 GPU 开销）
- * 2. 用 CSS grayscale filter 生成"灰色网格"图层
- * 3. mousemove 驱动 CSS clip-path 实现左右分割揭示效果
+ * 2. 用 Clay 材质生成"灰色网格"图层
+ * 3. mousemove 直接操作 CSS 变量 --cp 驱动 clip-path（绕过 Vue reactivity）
  *
- * 性能对比：
- * - 旧方案：每张卡片一个 WebGLRenderer + requestAnimationFrame 持续渲染
- * - 新方案：渲染一次 → 截图 → 销毁 → 纯 CSS 交互（零 GPU 持续消耗）
+ * 性能优化要点：
+ * - 不使用 Vue ref 做 clip 位置追踪（避免每帧 reactive update + re-render）
+ * - 直接 el.style.setProperty('--cp', ...) + CSS clip-path: polygon(... var(--cp) ...)
+ * - 与 Tripo 完全一致的更新路径：JS → CSS Variable → GPU Composite
  */
 import { onMounted, onUnmounted, ref } from 'vue'
 import {
@@ -38,15 +39,48 @@ const props = withDefaults(defineProps<{
 const containerRef = ref<HTMLDivElement | null>(null)
 const isLoading = ref(true)
 
-// 两张截图的 data URL
+// 两张截图的 data URL（仅在截图完成时赋值一次，不参与交互更新）
 const texturedImage = ref('')
 const grayImage = ref('')
 
-// Clip 位置（0-100%）
-const clipPosition = ref(0)
-const isHovering = ref(false)
-
 let initObserver: IntersectionObserver | null = null
+
+// ---- 直接 DOM 操作的事件处理（绕过 Vue reactivity）----
+let boundMove: ((e: MouseEvent) => void) | null = null
+let boundEnter: (() => void) | null = null
+let boundLeave: (() => void) | null = null
+
+function setupClipEvents(container: HTMLDivElement) {
+  boundMove = (e: MouseEvent) => {
+    const rect = container.getBoundingClientRect()
+    const pct = ((e.clientX - rect.left) / rect.width) * 100
+    // 直接设置 CSS 变量，零 Vue 开销
+    container.style.setProperty('--cp', `${Math.max(0, Math.min(100, pct))}%`)
+  }
+
+  boundEnter = () => {
+    container.classList.add('is-hovering')
+  }
+
+  boundLeave = () => {
+    container.classList.remove('is-hovering')
+    container.style.setProperty('--cp', '0%')
+  }
+
+  container.addEventListener('mousemove', boundMove, { passive: true })
+  container.addEventListener('mouseenter', boundEnter)
+  container.addEventListener('mouseleave', boundLeave)
+}
+
+function teardownClipEvents(container: HTMLDivElement) {
+  if (boundMove)
+    container.removeEventListener('mousemove', boundMove)
+  if (boundEnter)
+    container.removeEventListener('mouseenter', boundEnter)
+  if (boundLeave)
+    container.removeEventListener('mouseleave', boundLeave)
+  boundMove = boundEnter = boundLeave = null
+}
 
 /**
  * 渲染模型快照：加载 GLB → 渲染纹理图 → 切换灰色材质 → 渲染灰色图 → 销毁
@@ -55,7 +89,6 @@ function renderSnapshots(container: HTMLDivElement) {
   const width = container.clientWidth || 280
   const height = container.clientHeight || 280
 
-  // 创建离屏 canvas（不需要添加到 DOM）
   const canvas = document.createElement('canvas')
   canvas.width = width * Math.min(window.devicePixelRatio, 1.5)
   canvas.height = height * Math.min(window.devicePixelRatio, 1.5)
@@ -96,7 +129,7 @@ function renderSnapshots(container: HTMLDivElement) {
       model.position.sub(center)
       model.scale.setScalar(scale)
 
-      // 应用朝向旋转（让模型正面面向相机）
+      // 应用朝向旋转
       if (props.faceAngle !== 0) {
         model.rotation.y = (props.faceAngle * Math.PI) / 180
       }
@@ -134,7 +167,7 @@ function renderSnapshots(container: HTMLDivElement) {
 
       isLoading.value = false
 
-      // ---- 销毁 Three.js 资源（核心性能优化）----
+      // ---- 销毁 Three.js 资源 ----
       scene.traverse((obj: any) => {
         if (obj.geometry)
           obj.geometry.dispose()
@@ -161,29 +194,17 @@ function renderSnapshots(container: HTMLDivElement) {
   )
 }
 
-// ---- Clip Reveal 鼠标交互 ----
-function onMouseMove(e: MouseEvent) {
-  if (!containerRef.value)
-    return
-  const rect = containerRef.value.getBoundingClientRect()
-  const x = e.clientX - rect.left
-  clipPosition.value = Math.max(0, Math.min(100, (x / rect.width) * 100))
-}
-
-function onMouseEnter() {
-  isHovering.value = true
-}
-
-function onMouseLeave() {
-  isHovering.value = false
-  clipPosition.value = 0
-}
-
 onMounted(() => {
   if (!containerRef.value)
     return
 
-  // IntersectionObserver 懒加载：首次可见时才渲染截图
+  // 初始化 CSS 变量
+  containerRef.value.style.setProperty('--cp', '0%')
+
+  // 绑定原生事件（绕过 Vue）
+  setupClipEvents(containerRef.value)
+
+  // IntersectionObserver 懒加载
   initObserver = new IntersectionObserver(
     (entries) => {
       if (entries[0].isIntersecting && containerRef.value) {
@@ -198,6 +219,9 @@ onMounted(() => {
 })
 
 onUnmounted(() => {
+  if (containerRef.value) {
+    teardownClipEvents(containerRef.value)
+  }
   initObserver?.disconnect()
 })
 </script>
@@ -205,10 +229,7 @@ onUnmounted(() => {
 <template>
   <div
     ref="containerRef"
-    class="w-full h-full relative overflow-hidden"
-    @mousemove="onMouseMove"
-    @mouseenter="onMouseEnter"
-    @mouseleave="onMouseLeave"
+    class="clip-reveal w-full h-full relative overflow-hidden"
   >
     <!-- Loading state -->
     <div
@@ -218,28 +239,49 @@ onUnmounted(() => {
       <div class="w-6 h-6 border-2 border-primary/40 border-t-primary rounded-full animate-spin" />
     </div>
 
-    <!-- Layer 0: 灰色网格图（左侧，跟随鼠标揭示） -->
+    <!-- Layer 0: 灰色 Clay 图（左侧揭示） -->
     <div
       v-if="grayImage"
-      class="absolute inset-0 bg-cover bg-center bg-no-repeat transition-[clip-path] duration-75 ease-linear"
-      :style="{
-        backgroundImage: `url(${grayImage})`,
-        clipPath: isHovering
-          ? `polygon(0 0, ${clipPosition}% 0, ${clipPosition}% 100%, 0 100%)`
-          : 'polygon(0 0, 0 0, 0 100%, 0 100%)',
-      }"
+      class="clip-layer clip-layer--gray absolute inset-0 bg-cover bg-center bg-no-repeat"
+      :style="{ backgroundImage: `url(${grayImage})` }"
     />
 
-    <!-- Layer 1: 纹理渲染图（右侧，默认全显示） -->
+    <!-- Layer 1: 纹理 PBR 图（右侧，默认全显示） -->
     <div
       v-if="texturedImage"
-      class="absolute inset-0 bg-cover bg-center bg-no-repeat transition-[clip-path] duration-75 ease-linear"
-      :style="{
-        backgroundImage: `url(${texturedImage})`,
-        clipPath: isHovering
-          ? `polygon(${clipPosition}% 0, 100% 0, 100% 100%, ${clipPosition}% 100%)`
-          : 'polygon(0 0, 100% 0, 100% 100%, 0 100%)',
-      }"
+      class="clip-layer clip-layer--tex absolute inset-0 bg-cover bg-center bg-no-repeat"
+      :style="{ backgroundImage: `url(${texturedImage})` }"
     />
   </div>
 </template>
+
+<style scoped>
+/*
+ * 纯 CSS 驱动 clip-path —— 通过 CSS 变量 --cp 实时更新
+ * JS 只需 el.style.setProperty('--cp', '...') 即可
+ * 无 Vue re-render、无 JS clip-path 字符串拼接
+ */
+.clip-reveal {
+  --cp: 0%;
+}
+
+/* 灰色图层：默认隐藏，hover 时从左侧展开到 --cp 位置 */
+.clip-layer--gray {
+  clip-path: polygon(0 0, 0 0, 0 100%, 0 100%);
+  will-change: clip-path;
+}
+
+.clip-reveal.is-hovering .clip-layer--gray {
+  clip-path: polygon(0 0, var(--cp) 0, var(--cp) 100%, 0 100%);
+}
+
+/* 纹理图层：默认全显示，hover 时从 --cp 位置显示到右侧 */
+.clip-layer--tex {
+  clip-path: polygon(0 0, 100% 0, 100% 100%, 0 100%);
+  will-change: clip-path;
+}
+
+.clip-reveal.is-hovering .clip-layer--tex {
+  clip-path: polygon(var(--cp) 0, 100% 0, 100% 100%, var(--cp) 100%);
+}
+</style>
