@@ -47,18 +47,47 @@ html, body, #__nuxt {
   background: rgba(108, 92, 231, 0.5);
 }
 
-/* Smooth transitions for page navigation */
+/* ============================================
+   Page Transition — GSAP-enhanced
+   使用 CSS 作为 fallback, JS hooks 增强
+   ============================================ */
+
+/* 基础 CSS 过渡（GSAP 未加载时的 fallback） */
 .page-enter-active,
 .page-leave-active {
-  transition: opacity 0.3s ease, transform 0.3s ease;
+  transition: opacity 0.4s cubic-bezier(0.16, 1, 0.3, 1),
+              transform 0.4s cubic-bezier(0.16, 1, 0.3, 1),
+              filter 0.4s cubic-bezier(0.16, 1, 0.3, 1);
 }
 .page-enter-from {
   opacity: 0;
-  transform: translateY(10px);
+  transform: translateY(20px) scale(0.98);
+  filter: blur(4px);
 }
 .page-leave-to {
   opacity: 0;
-  transform: translateY(-10px);
+  transform: translateY(-20px) scale(0.98);
+  filter: blur(4px);
+}
+
+/* Layout 切换过渡 */
+.layout-enter-active,
+.layout-leave-active {
+  transition: opacity 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+}
+.layout-enter-from,
+.layout-leave-to {
+  opacity: 0;
+}
+
+/* 过渡遮罩层 */
+.page-transition-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 9999;
+  pointer-events: none;
+  background: linear-gradient(135deg, rgba(108, 92, 231, 0.15), rgba(0, 206, 201, 0.1));
+  opacity: 0;
 }
 
 /* Selection color */
