@@ -2,20 +2,21 @@ import type { GalleryModel } from '~/types/model'
 
 // Static model registry — works on all platforms (Vercel, local, etc.)
 // Add new models here when you add .glb files to public/models/
-const MODEL_REGISTRY: { file: string, category: string }[] = [
-  { file: 'castle.glb', category: 'architecture' },
-  { file: 'cat.glb', category: 'animal' },
-  { file: 'chair.glb', category: 'furniture' },
-  { file: 'cottage.glb', category: 'architecture' },
-  { file: 'couch.glb', category: 'furniture' },
-  { file: 'dragon.glb', category: 'animal' },
-  { file: 'fireplace.glb', category: 'architecture' },
-  { file: 'girl.glb', category: 'character' },
-  { file: 'micar.glb', category: 'vehicle' },
-  { file: 'pm.glb', category: 'character' },
-  { file: 'portrait.glb', category: 'character' },
-  { file: 'robot.glb', category: 'character' },
-  { file: 'threecat.glb', category: 'animal' },
+// faceAngle: Y 轴旋转角度（度），让模型正面朝向相机
+const MODEL_REGISTRY: { file: string, category: string, faceAngle?: number }[] = [
+  { file: 'castle.glb', category: 'architecture', faceAngle: 0 },
+  { file: 'cat.glb', category: 'animal', faceAngle: 180 },
+  { file: 'chair.glb', category: 'furniture', faceAngle: 180 },
+  { file: 'cottage.glb', category: 'architecture', faceAngle: 135 },
+  { file: 'couch.glb', category: 'furniture', faceAngle: 0 },
+  { file: 'dragon.glb', category: 'animal', faceAngle: 180 },
+  { file: 'fireplace.glb', category: 'architecture', faceAngle: 0 },
+  { file: 'girl.glb', category: 'character', faceAngle: 180 },
+  { file: 'micar.glb', category: 'vehicle', faceAngle: 135 },
+  { file: 'pm.glb', category: 'character', faceAngle: 180 },
+  { file: 'portrait.glb', category: 'character', faceAngle: 180 },
+  { file: 'robot.glb', category: 'character', faceAngle: 180 },
+  { file: 'threecat.glb', category: 'animal', faceAngle: 180 },
 ]
 
 // Prettify filename into a display name
@@ -37,6 +38,7 @@ function getModels(): GalleryModel[] {
       author: '3DGenerator',
       likes: Math.floor(Math.random() * 800 + 100),
       category: entry.category,
+      faceAngle: entry.faceAngle ?? 0,
     }
   })
 }

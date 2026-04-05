@@ -26,4 +26,6 @@ export interface GalleryModel {
   author: string
   likes: number
   category: string
+  /** 模型 Y 轴旋转角度（度），用于调整正面朝向。默认 0 */
+  faceAngle?: number
 }
