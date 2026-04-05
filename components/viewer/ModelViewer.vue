@@ -44,7 +44,6 @@ useMaterialSwitcher(modelScene, materialModeRef)
       <TresCanvas
         v-if="modelUrl"
         clear-color="#0A0A0F"
-        shadows
       >
         <TresPerspectiveCamera
           :position="[0, 2, 5]"
@@ -52,29 +51,26 @@ useMaterialSwitcher(modelScene, materialModeRef)
         />
 
         <OrbitControls
-          :auto-rotate="!isLoading"
-          :auto-rotate-speed="2"
+          :auto-rotate="false"
           :enable-zoom="true"
           :enable-pan="true"
+          :enable-damping="true"
+          :damping-factor="0.08"
         />
 
-        <TresAmbientLight :intensity="0.5" />
+        <TresAmbientLight :intensity="0.6" />
         <TresDirectionalLight
           :position="[5, 10, 7]"
-          :intensity="1"
-          cast-shadow
+          :intensity="1.2"
         />
-        <!-- Colored fill light for depth -->
         <TresDirectionalLight
           :position="[-5, 3, -3]"
-          :intensity="0.3"
+          :intensity="0.4"
           color="#6C5CE7"
         />
 
-        <!-- Grid Helper with themed colors -->
         <TresGridHelper :args="[10, 10, '#1A1A2E', '#151528']" />
 
-        <!-- Model -->
         <primitive v-if="!isLoading && modelScene" :object="modelScene" />
       </TresCanvas>
 
