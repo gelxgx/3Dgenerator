@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import type { GalleryModel, ModelTask } from '~/types/model'
+import type { MeshInfo } from '~/composables/useModelInteraction'
 
 definePageMeta({
   layout: 'default',
@@ -49,6 +50,12 @@ const { data: apiModel, pending } = !isDemoModel && !storeModel
 const modelTask = computed(() => {
   return demoModel.value || storeModel || apiModel.value || null
 })
+
+const selectedMeshInfo = ref<MeshInfo | null>(null)
+
+function handleMeshSelected(info: MeshInfo | null) {
+  selectedMeshInfo.value = info
+}
 </script>
 
 <template>
@@ -119,6 +126,7 @@ const modelTask = computed(() => {
       <ModelViewer
         :model-url="modelTask.modelUrl || null"
         :material-mode="selectedMaterial"
+        @mesh-selected="handleMeshSelected"
       />
 
       <!-- Model name overlay -->
@@ -157,6 +165,35 @@ const modelTask = computed(() => {
       class="w-80 bg-dark-surface/70 backdrop-blur-xl border-l border-border overflow-y-auto"
     >
       <ModelInfo :model-data="modelTask" />
+
+      <!-- Selected Part Info -->
+      <div
+        v-if="selectedMeshInfo"
+        class="p-6 border-t border-border space-y-3"
+      >
+        <h4 class="text-sm font-600 text-text flex items-center gap-2">
+          <i class="i-carbon-touch-1 text-primary-light" />
+          Selected Part
+        </h4>
+        <div class="space-y-2 text-xs">
+          <div class="flex justify-between">
+            <span class="text-text-tertiary">Name</span>
+            <span class="text-text font-500">{{ selectedMeshInfo.name }}</span>
+          </div>
+          <div class="flex justify-between">
+            <span class="text-text-tertiary">Faces</span>
+            <span class="text-text font-500 tabular-nums">{{ selectedMeshInfo.faceCount.toLocaleString() }}</span>
+          </div>
+          <div class="flex justify-between">
+            <span class="text-text-tertiary">Vertices</span>
+            <span class="text-text font-500 tabular-nums">{{ selectedMeshInfo.vertexCount.toLocaleString() }}</span>
+          </div>
+          <div class="flex justify-between">
+            <span class="text-text-tertiary">Material</span>
+            <span class="text-text font-500">{{ selectedMeshInfo.materialName }}</span>
+          </div>
+        </div>
+      </div>
     </div>
   </div>
 </template>
