@@ -5,6 +5,7 @@ import type { ExportFormat } from '~/composables/useModelExport'
 
 definePageMeta({
   layout: 'default',
+  ssr: false,
 })
 
 const { t } = useI18n()

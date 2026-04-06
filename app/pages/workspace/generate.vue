@@ -1,6 +1,7 @@
 <script setup lang="ts">
 definePageMeta({
   layout: 'default',
+  ssr: false,
 })
 
 const prompt = ref('')
