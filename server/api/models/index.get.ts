@@ -1,25 +1,27 @@
+import { readdirSync } from 'node:fs'
+import { join } from 'node:path'
+import process from 'node:process'
 import type { GalleryModel } from '~/types/model'
 
-// Static model registry — works on all platforms (Vercel, local, etc.)
-// Add new models here when you add .glb files to public/models/
-// faceAngle: Y 轴旋转角度（度），让模型正面朝向相机
-const MODEL_REGISTRY: { file: string, category: string, faceAngle?: number }[] = [
-  { file: 'castle.glb', category: 'architecture', faceAngle: 0 },
-  { file: 'cat.glb', category: 'animal', faceAngle: 180 },
-  { file: 'chair.glb', category: 'furniture', faceAngle: 180 },
-  { file: 'cottage.glb', category: 'architecture', faceAngle: 135 },
-  { file: 'couch.glb', category: 'furniture', faceAngle: 0 },
-  { file: 'dragon.glb', category: 'animal', faceAngle: 180 },
-  { file: 'fireplace.glb', category: 'architecture', faceAngle: 0 },
-  { file: 'girl.glb', category: 'character', faceAngle: 180 },
-  { file: 'micar.glb', category: 'vehicle', faceAngle: 135 },
-  { file: 'pm.glb', category: 'character', faceAngle: 180 },
-  { file: 'portrait.glb', category: 'character', faceAngle: 180 },
-  { file: 'robot.glb', category: 'character', faceAngle: 180 },
-  { file: 'threecat.glb', category: 'animal', faceAngle: 180 },
-]
+// Known model metadata — category & faceAngle overrides for existing files
+const MODEL_META: Record<string, { category: string, faceAngle?: number }> = {
+  'castle.glb': { category: 'architecture', faceAngle: 0 },
+  'cat.glb': { category: 'animal', faceAngle: 180 },
+  'chair.glb': { category: 'furniture', faceAngle: 180 },
+  'cottage.glb': { category: 'architecture', faceAngle: 135 },
+  'couch.glb': { category: 'furniture', faceAngle: 0 },
+  'dragon.glb': { category: 'animal', faceAngle: 180 },
+  'fireplace.glb': { category: 'architecture', faceAngle: 0 },
+  'girl.glb': { category: 'character', faceAngle: 180 },
+  'micar.glb': { category: 'vehicle', faceAngle: 135 },
+  'pm.glb': { category: 'character', faceAngle: 180 },
+  'portrait.glb': { category: 'character', faceAngle: 180 },
+  'robot.glb': { category: 'character', faceAngle: 180 },
+  'threecat.glb': { category: 'animal', faceAngle: 180 },
+  'threenewcat.glb': { category: 'animal', faceAngle: 180 },
+  'yeye.glb': { category: 'character', faceAngle: 180 },
+}
 
-// Prettify filename into a display name
 function prettifyName(filename: string): string {
   return filename
     .replace(/\.glb$/i, '')
@@ -27,18 +29,40 @@ function prettifyName(filename: string): string {
     .replace(/\b\w/g, c => c.toUpperCase())
 }
 
+// Stable "random" likes based on filename hash so they don't change on every request
+function stableLikes(filename: string): number {
+  let hash = 0
+  for (let i = 0; i < filename.length; i++)
+    hash = ((hash << 5) - hash + filename.charCodeAt(i)) | 0
+  return Math.abs(hash % 700) + 100
+}
+
+function scanModelsDir(): string[] {
+  try {
+    const modelsDir = join(process.cwd(), 'public', 'models')
+    return readdirSync(modelsDir)
+      .filter(f => f.toLowerCase().endsWith('.glb'))
+      .sort()
+  }
+  catch {
+    return Object.keys(MODEL_META)
+  }
+}
+
 function getModels(): GalleryModel[] {
-  return MODEL_REGISTRY.map((entry) => {
-    const name = prettifyName(entry.file)
+  const files = scanModelsDir()
+  return files.map((file) => {
+    const meta = MODEL_META[file] || { category: 'props' }
+    const name = prettifyName(file)
     return {
-      id: `demo-${entry.file.replace(/\.[^.]+$/, '')}`,
+      id: `demo-${file.replace(/\.[^.]+$/, '')}`,
       name,
-      thumbnailUrl: `/models/${entry.file}`,
-      modelUrl: `/models/${entry.file}`,
+      thumbnailUrl: `/models/${file}`,
+      modelUrl: `/models/${file}`,
       author: '3DGenerator',
-      likes: Math.floor(Math.random() * 800 + 100),
-      category: entry.category,
-      faceAngle: entry.faceAngle ?? 0,
+      likes: stableLikes(file),
+      category: meta.category,
+      faceAngle: meta.faceAngle ?? 0,
     }
   })
 }
