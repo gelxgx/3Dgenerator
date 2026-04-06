@@ -4,19 +4,21 @@ defineProps<{
   status: string
 }>()
 
-const tips = [
-  'Higher quality models take longer to generate',
-  'Be specific with your prompts for better results',
-  'Textures add realism but increase generation time',
-  'Great models start with great descriptions',
-]
+const { t } = useI18n()
+
+const tips = computed(() => [
+  t('generate.tip1'),
+  t('generate.tip2'),
+  t('generate.tip3'),
+  t('generate.tip4'),
+])
 
 const tipIndex = ref(0)
 let timer: ReturnType<typeof setInterval> | null = null
 
 onMounted(() => {
   timer = setInterval(() => {
-    tipIndex.value = (tipIndex.value + 1) % tips.length
+    tipIndex.value = (tipIndex.value + 1) % tips.value.length
   }, 4000)
 })
 

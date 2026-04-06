@@ -43,7 +43,16 @@
     "generate": "生成模型",
     "generating": "生成中...",
     "generateButton": "生成",
-    "characterCount": "字符数"
+    "characterCount": "字符数",
+    "subtitle": "描述你想创建的内容",
+    "dismiss": "关闭",
+    "successMessage": "模型生成成功",
+    "viewIn3D": "在3D中查看",
+    "download": "下载 GLB",
+    "tip1": "高质量模型需要更长的生成时间",
+    "tip2": "描述越具体，生成效果越好",
+    "tip3": "纹理增加真实感，但会延长生成时间",
+    "tip4": "好模型始于好描述"
   },
   "history": {
     "title": "生成历史",
@@ -59,9 +68,28 @@
     "vertices": "顶点数",
     "material": "材质",
     "originalPbr": "原始PBR",
-    "matcapSilver": "银色Matcap",
+    "matcapSilver": "银色",
     "whiteClay": "白色粘土",
     "wireframe": "线框",
-    "normal": "法线"
+    "normal": "法线",
+    "sceneTree": "场景树",
+    "noScene": "暂无场景",
+    "explode": "爆炸图",
+    "grid": "网格",
+    "selectedPart": "选中零件",
+    "tabInfo": "信息",
+    "tabScene": "场景",
+    "noModel": "暂无模型",
+    "loadFailed": "模型加载失败",
+    "modelNotFound": "模型未找到",
+    "modelNotFoundDesc": "找不到该模型",
+    "name": "名称",
+    "prompt": "提示词",
+    "qualityLabel": "品质",
+    "created": "创建时间",
+    "download": "下载 GLB",
+    "unnamed": "未命名",
+    "navigation": "导航",
+    "subtitle": "3D模型查看器"
   }
 }

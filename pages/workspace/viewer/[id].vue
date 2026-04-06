@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import type { Mesh, Object3D } from 'three'
 import type { GalleryModel, ModelTask } from '~/types/model'
 import type { MeshInfo } from '~/composables/useModelInteraction'
 
@@ -6,15 +7,14 @@ definePageMeta({
   layout: 'default',
 })
 
+const { t } = useI18n()
 const route = useRoute()
 const modelId = route.params.id as string
 const selectedMaterial = ref('originalPbr')
 const modelStore = useModelStore()
 
-// Check if it's a demo model from gallery
 const isDemoModel = modelId.startsWith('demo-')
 
-// For demo models, fetch from the gallery API
 const { data: galleryData } = isDemoModel
   ? await useFetch<{ items: GalleryModel[] }>('/api/models')
   : { data: ref(null) }
@@ -39,44 +39,70 @@ const demoModel = computed(() => {
   }
 })
 
-// For real models, check store first then API
-const storeModel = !isDemoModel ? modelStore.getModelById(modelId) : null
-
-const { data: apiModel, pending } = !isDemoModel && !storeModel
-  ? await useFetch<ModelTask>(`/api/models/${modelId}`)
-  : { data: ref(null), pending: ref(false) }
-
-const modelTask = computed(() => {
-  return demoModel.value || storeModel || apiModel.value || null
+const storeModel = computed(() => {
+  if (isDemoModel)
+    return null
+  return modelStore.getModelById(modelId) || null
 })
 
-// --- Interaction state ---
+const apiModel = ref<ModelTask | null>(null)
+const pending = ref(false)
+
+if (!isDemoModel && import.meta.server) {
+  try {
+    pending.value = true
+    const { data } = await useFetch<ModelTask>(`/api/models/${modelId}`)
+    apiModel.value = data.value
+  }
+  catch {
+    // Model might be in client-side store, don't fail on SSR
+  }
+  finally {
+    pending.value = false
+  }
+}
+
+const modelTask = computed(() => {
+  return demoModel.value || storeModel.value || apiModel.value || null
+})
+
 const viewerRef = ref<{ modelScene: any, model: any } | null>(null)
 const viewerScene = computed(() => viewerRef.value?.modelScene ?? null)
 
 const selectedMeshInfo = ref<MeshInfo | null>(null)
-const activeMode = ref<'select' | 'measure'>('select')
 const showGrid = ref(true)
 const activeTab = ref<'info' | 'scene'>('info')
 
-// Composables driven by scene
 const explode = useExplodeView(viewerScene)
 
 function handleMeshSelected(info: MeshInfo | null) {
   selectedMeshInfo.value = info
 }
 
-function handleModeChange(mode: 'select' | 'measure') {
-  activeMode.value = mode
+function handleSceneNodeSelect(obj: Object3D) {
+  const mesh = obj as Mesh
+  if (mesh.isMesh) {
+    const geo = mesh.geometry
+    const faceCount = geo.index
+      ? geo.index.count / 3
+      : geo.attributes.position.count / 3
+    const mat = Array.isArray(mesh.material) ? mesh.material[0] : mesh.material
+    selectedMeshInfo.value = {
+      name: mesh.name || 'Unnamed Mesh',
+      faceCount: Math.floor(faceCount),
+      vertexCount: geo.attributes.position.count,
+      materialName: mat?.name || mat?.type || 'Unknown',
+    }
+    activeTab.value = 'info'
+  }
 }
 </script>
 
 <template>
   <div class="w-full flex overflow-hidden">
-    <!-- Left Sidebar -->
     <AppSidebar />
 
-    <!-- Left Panel - Navigation & Controls -->
+    <!-- Left Panel -->
     <div class="w-64 bg-dark-surface/70 backdrop-blur-xl border-r border-border overflow-y-auto p-5 flex flex-col gap-6">
       <NuxtLink
         to="/"
@@ -91,7 +117,7 @@ function handleModeChange(mode: 'select' | 'measure') {
           {{ modelTask?.prompt?.slice(0, 25) || $t('nav.workspace') }}
         </h2>
         <p class="text-xs text-text-tertiary">
-          3D Model Viewer
+          {{ $t('viewer.subtitle') }}
         </p>
       </div>
 
@@ -106,7 +132,7 @@ function handleModeChange(mode: 'select' | 'measure') {
       <!-- Quick Nav -->
       <div class="border-t border-border pt-5">
         <p class="text-xs text-text-tertiary uppercase tracking-wider font-500 mb-3">
-          Navigation
+          {{ $t('viewer.navigation') }}
         </p>
         <nav class="space-y-1">
           <NuxtLink
@@ -140,27 +166,17 @@ function handleModeChange(mode: 'select' | 'measure') {
         ref="viewerRef"
         :model-url="modelTask.modelUrl || null"
         :material-mode="selectedMaterial"
+        :show-grid="showGrid"
         @mesh-selected="handleMeshSelected"
       />
 
-      <!-- Floating Toolbar -->
       <ViewerToolbar
-        :active-mode="activeMode"
         :is-exploded="explode.isExploded.value"
         :can-explode="explode.canExplode.value"
         :show-grid="showGrid"
-        @update:active-mode="handleModeChange"
         @toggle-explode="explode.toggleExplode()"
         @update:show-grid="showGrid = $event"
-        @clear-measurements="() => {}"
       />
-
-      <!-- Model name overlay -->
-      <div class="absolute top-14 left-4 z-10">
-        <div class="px-3 py-1.5 rounded-lg bg-dark/60 backdrop-blur-md text-xs text-text-secondary border border-border/50">
-          {{ modelTask.prompt?.slice(0, 40) }}
-        </div>
-      </div>
     </div>
 
     <div v-else-if="pending" class="flex-1 flex-col-center">
@@ -175,10 +191,10 @@ function handleModeChange(mode: 'select' | 'measure') {
         <i class="i-carbon-warning-filled text-2xl text-error" />
       </div>
       <p class="text-lg font-500 text-text mb-2">
-        Model not found
+        {{ $t('viewer.modelNotFound') }}
       </p>
       <p class="text-sm text-text-tertiary mb-6">
-        The model you're looking for doesn't exist
+        {{ $t('viewer.modelNotFoundDesc') }}
       </p>
       <NuxtLink to="/" class="btn-primary">
         {{ $t('common.back') }}
@@ -191,11 +207,11 @@ function handleModeChange(mode: 'select' | 'measure') {
       class="w-80 bg-dark-surface/70 backdrop-blur-xl border-l border-border flex flex-col overflow-hidden"
     >
       <!-- Tab Bar -->
-      <div class="flex border-b border-border flex-shrink-0">
+      <div class="flex bg-dark-surface border-b border-border flex-shrink-0">
         <button
           v-for="tab in ([
-            { key: 'info', icon: 'i-carbon-information', label: 'Info' },
-            { key: 'scene', icon: 'i-carbon-tree-view-alt', label: 'Scene' },
+            { key: 'info', icon: 'i-carbon-information', label: t('viewer.tabInfo') },
+            { key: 'scene', icon: 'i-carbon-tree-view-alt', label: t('viewer.tabScene') },
           ] as const)"
           :key="tab.key"
           class="flex-1 flex items-center justify-center gap-1.5 py-3 text-xs font-500 transition-colors border-b-2"
@@ -218,27 +234,27 @@ function handleModeChange(mode: 'select' | 'measure') {
           <!-- Selected Part Info -->
           <div
             v-if="selectedMeshInfo"
-            class="p-6 border-t border-border space-y-3"
+            class="mx-4 mb-4 p-4 bg-dark-surface-alt/40 backdrop-blur-lg border border-border rounded-xl animate-fade-in space-y-3"
           >
             <h4 class="text-sm font-600 text-text flex items-center gap-2">
               <i class="i-carbon-touch-1 text-primary-light" />
-              Selected Part
+              {{ $t('viewer.selectedPart') }}
             </h4>
             <div class="space-y-2 text-xs">
               <div class="flex justify-between">
-                <span class="text-text-tertiary">Name</span>
+                <span class="text-text-tertiary">{{ $t('viewer.name') }}</span>
                 <span class="text-text font-500">{{ selectedMeshInfo.name }}</span>
               </div>
               <div class="flex justify-between">
-                <span class="text-text-tertiary">Faces</span>
+                <span class="text-text-tertiary">{{ $t('viewer.faces') }}</span>
                 <span class="text-text font-500 tabular-nums">{{ selectedMeshInfo.faceCount.toLocaleString() }}</span>
               </div>
               <div class="flex justify-between">
-                <span class="text-text-tertiary">Vertices</span>
+                <span class="text-text-tertiary">{{ $t('viewer.vertices') }}</span>
                 <span class="text-text font-500 tabular-nums">{{ selectedMeshInfo.vertexCount.toLocaleString() }}</span>
               </div>
               <div class="flex justify-between">
-                <span class="text-text-tertiary">Material</span>
+                <span class="text-text-tertiary">{{ $t('viewer.material') }}</span>
                 <span class="text-text font-500">{{ selectedMeshInfo.materialName }}</span>
               </div>
             </div>
@@ -249,6 +265,7 @@ function handleModeChange(mode: 'select' | 'measure') {
         <template v-if="activeTab === 'scene'">
           <SceneTree
             :scene="viewerScene"
+            @select-node="handleSceneNodeSelect"
           />
         </template>
       </div>

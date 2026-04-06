@@ -43,7 +43,16 @@
     "generate": "Generate",
     "generating": "Generating...",
     "generateButton": "Generate",
-    "characterCount": "Characters"
+    "characterCount": "Characters",
+    "subtitle": "Describe what you want to create",
+    "dismiss": "Dismiss",
+    "successMessage": "Model generated successfully",
+    "viewIn3D": "View in 3D",
+    "download": "Download GLB",
+    "tip1": "Higher quality models take longer to generate",
+    "tip2": "Be specific with your prompts for better results",
+    "tip3": "Textures add realism but increase generation time",
+    "tip4": "Great models start with great descriptions"
   },
   "history": {
     "title": "Generation History",
@@ -59,9 +68,28 @@
     "vertices": "Vertices",
     "material": "Material",
     "originalPbr": "Original PBR",
-    "matcapSilver": "Silver Matcap",
+    "matcapSilver": "Silver",
     "whiteClay": "White Clay",
     "wireframe": "Wireframe",
-    "normal": "Normal"
+    "normal": "Normal",
+    "sceneTree": "Scene Tree",
+    "noScene": "No scene loaded",
+    "explode": "Explode",
+    "grid": "Grid",
+    "selectedPart": "Selected Part",
+    "tabInfo": "Info",
+    "tabScene": "Scene",
+    "noModel": "No model to display",
+    "loadFailed": "Failed to load model",
+    "modelNotFound": "Model not found",
+    "modelNotFoundDesc": "The model you're looking for doesn't exist",
+    "name": "Name",
+    "prompt": "Prompt",
+    "qualityLabel": "Quality",
+    "created": "Created",
+    "download": "Download GLB",
+    "unnamed": "Unnamed",
+    "navigation": "Navigation",
+    "subtitle": "3D Model Viewer"
   }
 }

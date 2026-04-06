@@ -41,10 +41,10 @@ async function handleGenerate() {
 
 const canGenerate = computed(() => prompt.value.trim().length > 0 && !isGenerating.value)
 
-// Extract real Tripo URL from proxy URL for download endpoint
 const downloadUrl = computed(() => {
   const modelUrl = currentTask.value?.modelUrl
-  if (!modelUrl) return ''
+  if (!modelUrl)
+    return ''
   if (modelUrl.startsWith('/api/proxy-model?url=')) {
     const realUrl = decodeURIComponent(modelUrl.replace('/api/proxy-model?url=', ''))
     return `/api/download?url=${encodeURIComponent(realUrl)}`
@@ -55,30 +55,23 @@ const downloadUrl = computed(() => {
 
 <template>
   <div class="w-full h-full flex overflow-hidden">
-    <!-- Left Sidebar Nav -->
     <AppSidebar />
 
-    <!-- Main Content: Two-column layout -->
     <div class="flex-1 flex h-full min-w-0">
       <!-- Left Panel - Input & Config -->
       <div class="w-[380px] flex-shrink-0 border-r border-border flex flex-col h-full overflow-hidden bg-dark-surface/40">
-        <!-- Scrollable Content (includes header, inputs, params) -->
         <div class="flex-1 min-h-0 overflow-y-auto overflow-x-hidden px-6 pt-5 pb-4 scrollbar-thin">
-          <!-- Header -->
           <h2 class="text-base font-600 text-text">
             {{ $t('generate.title') }}
           </h2>
           <p class="text-xs text-text-tertiary mt-1 mb-5">
-            Describe what you want to create
+            {{ $t('generate.subtitle') }}
           </p>
 
-          <!-- Prompt Input -->
           <PromptInput v-model="prompt" />
 
-          <!-- Divider -->
           <div class="h-px bg-border my-5" />
 
-          <!-- Parameters -->
           <ParamPanel
             v-model:quality="quality"
             v-model:texture-enabled="textureEnabled"
@@ -86,9 +79,8 @@ const downloadUrl = computed(() => {
           />
         </div>
 
-        <!-- Fixed Bottom: Error + Generate Button -->
+        <!-- Fixed Bottom -->
         <div class="flex-shrink-0 px-6 py-4 border-t border-border bg-dark-surface/60">
-          <!-- Error Display -->
           <div
             v-if="error"
             class="mb-3 bg-error/8 border border-error/20 rounded-lg p-3 text-xs"
@@ -103,13 +95,12 @@ const downloadUrl = computed(() => {
                   class="text-error/50 hover:text-error underline mt-1"
                   @click="clearError"
                 >
-                  Dismiss
+                  {{ $t('generate.dismiss') }}
                 </button>
               </div>
             </div>
           </div>
 
-          <!-- Generate Button -->
           <button
             :disabled="!canGenerate"
             class="w-full h-11 rounded-xl font-600 text-sm transition-all duration-300 flex items-center justify-center gap-2.5"
@@ -129,7 +120,6 @@ const downloadUrl = computed(() => {
 
       <!-- Right Panel - 3D Viewport / Preview -->
       <div class="flex-1 flex flex-col items-center justify-center relative bg-dark min-w-0 h-full overflow-hidden">
-        <!-- Subtle background pattern -->
         <div class="absolute inset-0 opacity-[0.03]" style="background-image: radial-gradient(circle, rgba(108,92,231,0.5) 1px, transparent 1px); background-size: 32px 32px;" />
 
         <!-- Generating State -->
@@ -156,7 +146,7 @@ const downloadUrl = computed(() => {
             {{ $t('common.success') }}
           </p>
           <p class="text-sm text-text-secondary mb-8">
-            Model generated successfully
+            {{ $t('generate.successMessage') }}
           </p>
           <div class="flex items-center justify-center gap-3">
             <NuxtLink
@@ -164,7 +154,7 @@ const downloadUrl = computed(() => {
               class="btn-glow inline-flex items-center gap-2 px-6 py-3"
             >
               <i class="i-carbon-view" />
-              View in 3D
+              {{ $t('generate.viewIn3D') }}
             </NuxtLink>
             <a
               :href="downloadUrl"
@@ -172,7 +162,7 @@ const downloadUrl = computed(() => {
               class="inline-flex items-center gap-2 px-5 py-3 rounded-xl text-sm font-500 border border-border text-text-secondary hover:text-text hover:border-primary/40 hover:bg-primary/5 transition-all duration-200"
             >
               <i class="i-carbon-download" />
-              Download GLB
+              {{ $t('generate.download') }}
             </a>
           </div>
         </div>

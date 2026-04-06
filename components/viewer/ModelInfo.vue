@@ -5,19 +5,21 @@ const props = defineProps<{
   modelData: ModelTask
 }>()
 
+const { t, locale } = useI18n()
+
 const animatedFaces = useAnimatedNumber(() => props.modelData.faces || 0)
 const animatedVertices = useAnimatedNumber(() => props.modelData.vertices || 0)
 
 function formatDate(dateString: string): string {
   try {
-    return new Date(dateString).toLocaleDateString('en-US', {
+    return new Date(dateString).toLocaleDateString(locale.value === 'zh-CN' ? 'zh-CN' : 'en-US', {
       year: 'numeric',
       month: 'short',
       day: 'numeric',
     })
   }
   catch {
-    return 'Unknown'
+    return '-'
   }
 }
 
@@ -25,8 +27,6 @@ function downloadModel() {
   if (!props.modelData.modelUrl)
     return
 
-  // modelUrl is already a proxy URL like /api/proxy-model?url=...
-  // Extract the real URL for the download endpoint, or use as-is
   let downloadUrl = props.modelData.modelUrl
   if (downloadUrl.startsWith('/api/proxy-model?url=')) {
     const realUrl = decodeURIComponent(downloadUrl.replace('/api/proxy-model?url=', ''))
@@ -54,16 +54,16 @@ function downloadModel() {
     <div class="space-y-4">
       <div>
         <p class="text-xs text-text-tertiary uppercase tracking-wider mb-1.5 font-500">
-          Name
+          {{ $t('viewer.name') }}
         </p>
         <p class="text-sm text-text font-500">
-          {{ modelData.prompt?.slice(0, 30) || 'Unnamed' }}
+          {{ modelData.prompt?.slice(0, 30) || t('viewer.unnamed') }}
         </p>
       </div>
 
       <div>
         <p class="text-xs text-text-tertiary uppercase tracking-wider mb-1.5 font-500">
-          Prompt
+          {{ $t('viewer.prompt') }}
         </p>
         <p class="text-sm text-text-secondary break-words leading-relaxed">
           {{ modelData.prompt }}
@@ -91,17 +91,17 @@ function downloadModel() {
 
       <div>
         <p class="text-xs text-text-tertiary uppercase tracking-wider mb-1.5 font-500">
-          Quality
+          {{ $t('viewer.qualityLabel') }}
         </p>
         <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-xs font-500 bg-primary/10 text-primary-light border border-primary/20">
           <i :class="modelData.quality === 'ultra' ? 'i-carbon-star-filled' : 'i-carbon-star'" class="text-xs" />
-          {{ modelData.quality }}
+          {{ modelData.quality === 'ultra' ? $t('generate.qualityUltra') : $t('generate.qualityStandard') }}
         </span>
       </div>
 
       <div>
         <p class="text-xs text-text-tertiary uppercase tracking-wider mb-1.5 font-500">
-          Created
+          {{ $t('viewer.created') }}
         </p>
         <p class="text-sm text-text-secondary">
           {{ formatDate(modelData.createdAt) }}
@@ -116,7 +116,7 @@ function downloadModel() {
         @click="downloadModel"
       >
         <i class="i-carbon-download" />
-        Download GLB
+        {{ $t('viewer.download') }}
       </button>
     </div>
   </div>

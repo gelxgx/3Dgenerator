@@ -8,8 +8,10 @@ import type { MeshInfo } from '~/composables/useModelInteraction'
 const props = withDefaults(defineProps<{
   modelUrl: string | null
   materialMode?: string
+  showGrid?: boolean
 }>(), {
   materialMode: 'originalPbr',
+  showGrid: true,
 })
 
 const emit = defineEmits<{
@@ -79,7 +81,7 @@ defineExpose({
           color="#6C5CE7"
         />
 
-        <TresGridHelper :args="[10, 10, '#1A1A2E', '#151528']" />
+        <TresGridHelper v-if="showGrid" :args="[10, 10, '#1A1A2E', '#151528']" />
 
         <primitive v-if="!isLoading && modelScene" :object="modelScene" />
 
@@ -99,7 +101,7 @@ defineExpose({
           <i class="i-carbon-cube text-3xl" />
         </div>
         <p class="text-text-secondary font-500">
-          No model to display
+          {{ $t('viewer.noModel') }}
         </p>
       </div>
 
@@ -123,7 +125,7 @@ defineExpose({
           <i class="i-carbon-warning-filled text-2xl text-error" />
         </div>
         <p class="text-text text-sm font-500 mb-2">
-          Failed to load model
+          {{ $t('viewer.loadFailed') }}
         </p>
         <p class="text-text-tertiary text-xs max-w-sm">
           {{ loadError }}

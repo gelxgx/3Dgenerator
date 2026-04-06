@@ -13,13 +13,15 @@ const emit = defineEmits<{
   'change': [mode: string]
 }>()
 
-const materialModes = [
-  { key: 'originalPbr', label: 'PBR', color: '#666666', icon: 'i-carbon-cube' },
-  { key: 'matcapSilver', label: 'Silver', color: '#c0c0c0', icon: 'i-carbon-circle-filled' },
-  { key: 'whiteClay', label: 'Clay', color: '#f5f5f5', icon: 'i-carbon-circle-filled' },
-  { key: 'wireframe', label: 'Wire', color: '#00CEC9', icon: 'i-carbon-network-3' },
-  { key: 'normal', label: 'Normal', color: '#A29BFE', icon: 'i-carbon-gradient' },
-]
+const { t } = useI18n()
+
+const materialModes = computed(() => [
+  { key: 'originalPbr', label: t('viewer.originalPbr'), color: '#666666', icon: 'i-carbon-cube' },
+  { key: 'matcapSilver', label: t('viewer.matcapSilver'), color: '#c0c0c0', icon: 'i-carbon-circle-filled' },
+  { key: 'whiteClay', label: t('viewer.whiteClay'), color: '#f5f5f5', icon: 'i-carbon-circle-filled' },
+  { key: 'wireframe', label: t('viewer.wireframe'), color: '#00CEC9', icon: 'i-carbon-network-3' },
+  { key: 'normal', label: t('viewer.normal'), color: '#A29BFE', icon: 'i-carbon-gradient' },
+])
 
 const activeMaterial = computed(() => props.modelValue)
 </script>

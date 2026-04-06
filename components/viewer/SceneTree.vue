@@ -18,8 +18,11 @@ const emit = defineEmits<{
   selectNode: [obj: Object3D]
 }>()
 
+const { t } = useI18n()
+
 const treeData = ref<SceneNode[]>([])
 const expandedNodes = ref<Set<string>>(new Set())
+const selectedPath = ref<string | null>(null)
 
 function buildTree(obj: Object3D, path = '0'): SceneNode {
   const isMesh = (obj as Mesh).isMesh
@@ -69,17 +72,22 @@ function toggleVisible(node: SceneNode) {
   node.visible = !node.visible
   node.object.visible = node.visible
 }
+
+function handleSelect(obj: Object3D, path: string) {
+  selectedPath.value = path
+  emit('selectNode', obj)
+}
 </script>
 
 <template>
   <div class="p-4 text-xs">
     <h4 class="text-sm font-600 text-text mb-3 flex items-center gap-2">
       <i class="i-carbon-tree-view-alt text-primary-light" />
-      Scene Tree
+      {{ t('viewer.sceneTree') }}
     </h4>
 
-    <div v-if="treeData.length === 0" class="text-text-tertiary">
-      No scene loaded
+    <div v-if="treeData.length === 0" class="text-text-tertiary py-4 text-center">
+      {{ t('viewer.noScene') }}
     </div>
 
     <template v-else>
@@ -90,9 +98,10 @@ function toggleVisible(node: SceneNode) {
         :path="String(i)"
         :depth="0"
         :expanded-nodes="expandedNodes"
+        :selected-path="selectedPath"
         @toggle-expand="toggleExpand"
         @toggle-visible="toggleVisible"
-        @select="(obj: Object3D) => emit('selectNode', obj)"
+        @select="handleSelect"
       />
     </template>
   </div>
