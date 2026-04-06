@@ -10,14 +10,17 @@ const currentLocale = computed({
 })
 
 function switchLocale() {
-  const availableLocales = (locales.value as any).map((l: any) => l.code || l)
+  const availableLocales = (locales.value as Array<string | { code: string }>).map(
+    l => typeof l === 'string' ? l : l.code,
+  )
   const currentIndex = availableLocales.indexOf(currentLocale.value)
   const nextIndex = (currentIndex + 1) % availableLocales.length
   currentLocale.value = availableLocales[nextIndex]
 }
 
 function isActive(path: string) {
-  if (path === '/') return route.path === '/'
+  if (path === '/')
+    return route.path === '/'
   return route.path.startsWith(path)
 }
 </script>

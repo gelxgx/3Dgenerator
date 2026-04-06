@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { OrbitControls } from '@tresjs/cientos'
+import type { Group } from 'three'
 import { Box3, Vector3 } from 'three'
 import { toRaw } from 'vue'
 
@@ -12,8 +13,7 @@ const props = withDefaults(defineProps<{
 
 const { model, isLoading, error: loadError } = useGLTFLoader(toRef(() => props.modelUrl))
 
-// Use shallowRef to avoid Vue proxying Three.js objects
-const modelScene = shallowRef<any>(null)
+const modelScene = shallowRef<Group | null>(null)
 
 watch(model, (gltf) => {
   if (!gltf) {

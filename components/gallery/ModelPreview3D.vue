@@ -168,12 +168,13 @@ function renderSnapshots(container: HTMLDivElement) {
       isLoading.value = false
 
       // ---- 销毁 Three.js 资源 ----
-      scene.traverse((obj: any) => {
-        if (obj.geometry)
-          obj.geometry.dispose()
-        if (obj.material) {
-          const mats = Array.isArray(obj.material) ? obj.material : [obj.material]
-          mats.forEach((m: any) => {
+      scene.traverse((obj) => {
+        const mesh = obj as import('three').Mesh
+        if (mesh.geometry)
+          mesh.geometry.dispose()
+        if (mesh.material) {
+          const mats = Array.isArray(mesh.material) ? mesh.material : [mesh.material]
+          mats.forEach((m) => {
             m.map?.dispose()
             m.normalMap?.dispose()
             m.roughnessMap?.dispose()
