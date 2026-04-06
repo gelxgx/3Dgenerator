@@ -1,5 +1,3 @@
-import type { ModelTask } from '~/types/model'
-
 export default defineEventHandler(async (event) => {
   const id = getRouterParam(event, 'id')
 
@@ -11,11 +9,11 @@ export default defineEventHandler(async (event) => {
   }
 
   try {
-    const taskData = await getTripoTaskStatus(id)
+    const taskData = await get3DTaskStatus(id)
     const statusStr = taskData.status as string
     const output = taskData.output || {}
 
-    // Proxy Tripo CDN URLs through our server to avoid CORS issues
+    // Proxy CDN URLs through our server to avoid CORS issues
     const rawModelUrl = output.pbr_model || output.model
     const rawThumbnailUrl = output.rendered_image
 

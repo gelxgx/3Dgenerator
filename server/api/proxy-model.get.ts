@@ -1,9 +1,10 @@
+import { Buffer } from 'node:buffer'
+
 /**
- * Proxy endpoint for loading 3D model files from Tripo's CDN.
- * Needed because Tripo's CDN doesn't set CORS headers for localhost,
- * so Three.js GLTFLoader can't fetch models directly from the browser.
+ * Proxies external 3D model files through this server so the browser can load them
+ * without cross-origin restrictions (e.g. GLB/GLTF for Three.js).
  *
- * Usage: /api/proxy-model?url=<encoded-tripo-url>
+ * Usage: /api/proxy-model?url=<encoded-url>
  */
 export default defineEventHandler(async (event) => {
   const query = getQuery(event)
@@ -16,7 +17,7 @@ export default defineEventHandler(async (event) => {
     })
   }
 
-  // Security: only allow proxying from Tripo's known domains
+  // Security: only allow proxying from known CDN domains
   let urlObj: URL
   try {
     urlObj = new URL(url)
@@ -53,14 +54,15 @@ export default defineEventHandler(async (event) => {
 
     // Set appropriate headers for GLB/GLTF files
     setResponseHeader(event, 'Content-Type', contentType)
-    setResponseHeader(event, 'Content-Length', buffer.byteLength.toString())
+    setResponseHeader(event, 'Content-Length', buffer.byteLength)
     setResponseHeader(event, 'Access-Control-Allow-Origin', '*')
     setResponseHeader(event, 'Cache-Control', 'public, max-age=86400') // Cache 24h
 
     return Buffer.from(buffer)
   }
   catch (err: any) {
-    if (err.statusCode) throw err
+    if (err.statusCode)
+      throw err
     console.error('[Proxy] Failed to fetch model:', err.message)
     throw createError({
       statusCode: 502,

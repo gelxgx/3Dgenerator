@@ -1,3 +1,5 @@
+import { Buffer } from 'node:buffer'
+
 export default defineEventHandler(async (event) => {
   const query = getQuery(event)
   const url = query.url as string
@@ -9,7 +11,7 @@ export default defineEventHandler(async (event) => {
     })
   }
 
-  // Only allow downloading from Tripo's CDN domains
+  // Only allow downloading from known CDN domains
   const allowedDomains = ['tripo3d.ai', 'tripo-data', 'amazonaws.com']
   const urlObj = new URL(url)
   const isAllowed = allowedDomains.some(d => urlObj.hostname.includes(d))
@@ -37,7 +39,7 @@ export default defineEventHandler(async (event) => {
 
   setResponseHeader(event, 'Content-Type', contentType)
   setResponseHeader(event, 'Content-Disposition', 'attachment; filename="model.glb"')
-  setResponseHeader(event, 'Content-Length', buffer.byteLength.toString())
+  setResponseHeader(event, 'Content-Length', buffer.byteLength)
 
   return Buffer.from(buffer)
 })

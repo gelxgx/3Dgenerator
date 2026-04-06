@@ -1,221 +1,151 @@
 # 3DGenerator — AI 3D 模型生成平台
 
-基于 **Nuxt 3 + Vue 3 + Three.js** 生态的全栈 3D 模型生成与预览平台，涵盖 SSR、实时 3D 渲染、GSAP 动画、性能优化及现代前端架构实践。
+基于 **Nuxt 4 + Vue 3 + Three.js** 生态的全栈 3D 模型生成与预览平台，涵盖 SSR、实时 3D 渲染、骨骼动画、模型分割、材质编辑、多格式导出、GSAP 动画、国际化及现代前端工程实践。
 
 ## 技术栈
 
 | 层级 | 技术 |
 |------|------|
-| 框架 | Nuxt 3（SSR + SPA 混合模式） |
+| 框架 | Nuxt 4（SSR + SPA 混合模式） |
 | UI | Vue 3 Composition API + TypeScript |
-| 3D 引擎 | Three.js + TresJS（Vue 3D 渲染器） |
-| 动画 | GSAP（ScrollTrigger、页面过渡） |
-| 样式 | UnoCSS（原子化 CSS） |
-| 状态管理 | Pinia |
-| 国际化 | @nuxtjs/i18n（zh-CN / en） |
+| 3D 引擎 | Three.js + TresJS（Vue 3D 声明式渲染器） |
+| 动画 | GSAP（ScrollTrigger）+ CSS Keyframe 动画 |
+| 样式 | UnoCSS（原子化 CSS + Glassmorphism 设计系统） |
+| 状态管理 | Pinia 3 |
+| 国际化 | @nuxtjs/i18n v10（zh-CN / en） |
 | API | Nuxt Server Routes + SSE（Server-Sent Events） |
+| 代码质量 | ESLint（@antfu/eslint-config）+ Husky + Commitlint |
 | 部署 | Vercel（Edge Functions） |
 
-## 项目结构
+## 项目结构（Nuxt 4）
 
 ```
-tripo-lite/
-├── pages/
-│   ├── index.vue                      # 首页：Hero + Gallery 网格
-│   └── workspace/
-│       ├── generate.vue               # AI 生成界面（提示词 + 参数）
-│       ├── history.vue                # 生成历史列表
-│       └── viewer/[id].vue            # 单模型 3D 工作区
-├── components/
-│   ├── gallery/
-│   │   ├── ModelCard.vue              # 画廊卡片，clip-reveal 悬停效果
-│   │   ├── ModelPreview3D.vue         # 快照渲染器 + 双层 clip
-│   │   └── CategoryFilter.vue         # 分类筛选栏
-│   ├── home/
-│   │   └── HeroScene.vue             # GPU 粒子系统（自定义 GLSL）
-│   ├── viewer/
-│   │   ├── ModelViewer.vue            # 完整 3D 查看器（TresCanvas + OrbitControls）
-│   │   ├── MaterialSwitcher.vue       # 材质模式切换（PBR/Clay/Wire/Normal）
-│   │   └── ModelInfo.vue              # 模型元数据面板
-│   ├── generate/
-│   │   ├── PromptInput.vue            # AI 提示词输入
-│   │   ├── ParamPanel.vue             # 生成参数面板
-│   │   ├── ProgressBar.vue            # SSE 进度追踪器
-│   │   └── PointCloud.vue             # 点云可视化
-│   └── layout/
-│       ├── AppHeader.vue              # 顶部导航栏
-│       └── AppSidebar.vue             # 侧边导航
-├── composables/
-│   ├── useGLTFLoader.ts               # GLB 模型加载（meshopt 支持）
-│   ├── useMaterialSwitcher.ts         # 运行时材质切换
-│   ├── useModelGenerate.ts            # AI 生成状态机
-│   ├── useGsap.ts                     # GSAP 实例提供者
-│   └── useAnimatedNumber.ts           # 平滑数字插值
-├── stores/
-│   └── model.ts                       # Pinia：模型任务管理
+3dgenerator/
+├── app/                                  # 应用源码（Nuxt 4 srcDir）
+│   ├── pages/
+│   │   ├── index.vue                     # 首页：Hero 粒子系统 + Gallery 网格
+│   │   └── workspace/
+│   │       ├── generate.vue              # AI 生成界面（提示词 + 参数面板）
+│   │       ├── history.vue               # 生成历史列表
+│   │       └── viewer/[id].vue           # 3D 工作区（查看/编辑/导出）
+│   ├── components/
+│   │   ├── gallery/
+│   │   │   ├── ModelCard.vue             # 画廊卡片，clip-reveal 悬停效果
+│   │   │   ├── ModelPreview3D.vue        # 快照渲染器 + 双层 clip 交互
+│   │   │   └── CategoryFilter.vue        # 分类筛选栏
+│   │   ├── home/
+│   │   │   └── HeroScene.vue             # GPU 粒子系统（自定义 GLSL Shader）
+│   │   ├── viewer/
+│   │   │   ├── ModelViewer.vue           # 3D 查看器（TresCanvas + OrbitControls）
+│   │   │   ├── ViewerToolbar.vue         # 工具栏（爆炸视图/线框/网格）
+│   │   │   ├── MaterialSwitcher.vue      # 材质模式切换（PBR/Clay/Wire/Normal）
+│   │   │   ├── MaterialEditor.vue        # 实时材质属性编辑器
+│   │   │   ├── SceneTree.vue             # 场景节点树
+│   │   │   ├── AnimationPanel.vue        # 骨骼动画控制面板
+│   │   │   ├── SegmentPanel.vue          # 模型语义分割面板
+│   │   │   └── ModelInfo.vue             # 模型元数据 + 多格式导出
+│   │   ├── generate/
+│   │   │   ├── PromptInput.vue           # AI 提示词输入
+│   │   │   ├── ParamPanel.vue            # 生成参数面板
+│   │   │   ├── ProgressBar.vue           # SSE 进度追踪器
+│   │   │   └── PointCloud.vue            # 生成过程点云粒子可视化
+│   │   └── layout/
+│   │       ├── AppHeader.vue             # 顶部导航栏（含语言切换）
+│   │       └── AppSidebar.vue            # 侧边导航
+│   ├── composables/
+│   │   ├── useGLTFLoader.ts              # GLB 模型加载（meshopt 支持）
+│   │   ├── useMaterialSwitcher.ts        # 运行时材质切换
+│   │   ├── useModelGenerate.ts           # AI 生成状态机
+│   │   ├── useModelInteraction.ts        # 模型交互（点选 Mesh）
+│   │   ├── useExplodeView.ts             # 爆炸视图（GSAP 驱动）
+│   │   ├── useSkeletonViewer.ts          # 骨骼可视化
+│   │   ├── useAnimationPlayer.ts         # 动画播放控制器
+│   │   ├── useSegmentation.ts            # 模型语义分割
+│   │   ├── useModelExport.ts             # 多格式导出（GLB/OBJ/STL）
+│   │   └── useGsap.ts                    # GSAP 实例提供者
+│   ├── stores/
+│   │   └── model.ts                      # Pinia：模型任务管理 + localStorage 持久化
+│   ├── plugins/
+│   │   ├── gsap.client.ts                # GSAP + ScrollTrigger CDN 加载
+│   │   └── pageTransition.client.ts      # 路由过渡编排
+│   └── app.vue                           # 根组件
+├── shared/                               # App 与 Server 共享代码
+│   └── types/
+│       └── model.ts                      # TypeScript 类型定义（自动导入）
+├── i18n/
+│   └── locales/
+│       ├── zh-CN.json                    # 中文语言包
+│       └── en.json                       # 英文语言包
 ├── server/
-│   └── api/
-│       ├── models/index.get.ts        # 画廊模型列表 API
-│       ├── models/[id].get.ts         # 单模型 API
-│       ├── generate.post.ts           # AI 生成触发
-│       ├── proxy-model.get.ts         # GLB 代理（CORS 绕过）
-│       └── download.get.ts            # 模型下载处理
-├── plugins/
-│   ├── gsap.client.ts                 # GSAP + ScrollTrigger 注册
-│   └── pageTransition.client.ts       # 路由过渡编排
-├── locales/
-│   ├── zh-CN.json                     # 中文语言包
-│   └── en.json                        # 英文语言包
-└── types/
-    └── model.ts                       # TypeScript 类型定义
+│   ├── api/
+│   │   ├── models/index.get.ts           # 画廊 API（自动扫描 public/models/）
+│   │   ├── models/[id].get.ts            # 单模型 API
+│   │   ├── generate.post.ts              # AI 生成触发（SSE 推送）
+│   │   ├── proxy-model.get.ts            # GLB 代理（CORS）
+│   │   └── download.get.ts              # 模型下载
+│   └── utils/
+│       ├── api3d.ts                      # 3D API 客户端封装
+│       └── promptEngine.ts               # 提示词增强引擎
+├── public/models/                        # GLB 模型文件（自动扫描）
+├── nuxt.config.ts
+└── package.json
 ```
 
-## 架构与核心技术要点
+## 核心功能
 
-### 1. SSR + 仅客户端 3D 渲染
+### 3D 模型查看与交互
+- **实时 3D 渲染** — TresJS 声明式渲染 + OrbitControls 相机控制
+- **材质切换** — PBR / Matcap Silver / White Clay / Wireframe / Normal Map 五种模式
+- **材质编辑器** — 实时调整 Color、Roughness、Metalness、Opacity
+- **爆炸视图** — GSAP 驱动的模型拆解动画
+- **场景树** — 递归展示模型节点层级，点选高亮
+- **Mesh 交互** — Raycaster 拾取网格，显示顶点/面数信息
 
-Nuxt 3 全局启用 SSR 以获得 SEO 和快速首屏渲染。所有 Three.js 组件都包裹在 `<ClientOnly>` 中，因为 WebGL API 仅在浏览器端可用。核心难点在于管理 `onMounted`、`onUnmounted` 等生命周期钩子在 SSR 与客户端水合阶段的行为差异。
+### 骨骼动画系统
+- **SkeletonHelper 可视化** — 骨骼线框叠加显示
+- **动画播放器** — 播放/暂停、进度拖拽、速度调节（0.25x ~ 2x）
+- **多 Clip 切换** — 支持 GLTF 中多个 AnimationClip
 
-```vue
-<!-- pages/workspace/viewer/[id].vue -->
-<ClientOnly>
-  <TresCanvas clear-color="#0A0A0F">
-    <TresPerspectiveCamera :position="[0, 2, 5]" :fov="50" />
-    <OrbitControls :enable-damping="true" :damping-factor="0.08" />
-    <primitive v-if="modelScene" :object="modelScene" />
-  </TresCanvas>
-</ClientOnly>
-```
+### 模型分割
+- **语义分割** — 按 Mesh 自动分割为独立 Segment
+- **颜色编码** — 每个 Segment 分配唯一颜色
+- **可见性控制** — 独立切换每个 Segment 的显示/隐藏
 
-SSR 安全的清理方式使用 `onScopeDispose` 并配合 `import.meta.client` 守卫，而非直接使用 `onUnmounted`——后者在 SSR 期间非组件上下文中会抛出异常。
+### 多格式导出
+- **GLB** — 标准 glTF Binary 格式
+- **OBJ** — Wavefront OBJ 格式
+- **STL** — 3D 打印格式
 
-### 2. 画廊：快照渲染器 + Clip-Reveal 交互
+### AI 3D 模型生成
+- **SSE 实时进度推送** — Server-Sent Events 驱动生成状态
+- **点云粒子可视化** — 自定义 GLSL Shader 的生成过程动效
+- **提示词增强引擎** — 自动分析并优化用户提示词
+- **多版本 API 支持** — Standard v2.0 ~ Advanced v3.1
 
-首页画廊采用**渲染一次即销毁**模式，而非为每张卡片维持持久的 WebGL 上下文：
+### 首页与画廊
+- **GPU 粒子 Hero** — 自定义 ShaderMaterial，鼠标排斥交互
+- **快照渲染器** — 渲染即销毁，零持久 WebGL 上下文
+- **Clip-Reveal 悬停** — CSS clip-path 双层材质对比
+- **CSS Keyframe 入场动画** — SSR 安全，heroReady 门控避免水合闪烁
+- **动态模型扫描** — API 自动读取 public/models/ 目录
 
-```
-GLB 加载 → Three.js 渲染（PBR）→ toDataURL → 切换为 Clay 材质 →
-再次渲染 → toDataURL → 销毁渲染器 → forceContextLoss()
-```
+## 架构亮点
 
-悬停时，两个静态图像层通过 CSS `clip-path` 分割，由一个跟踪鼠标 X 位置的 CSS 变量驱动。整条交互链路为：**JS `setProperty('--cp')` → CSS `var(--cp)` 作用于 clip-path → GPU 合成** —— 零 Vue 响应式开销。
+### SSR + 仅客户端 3D 渲染
+Nuxt 4 全局启用 SSR。所有 Three.js 组件包裹在 `<ClientOnly>` 中。核心挑战在于管理 SSR/客户端水合阶段的生命周期差异，以及确保动画不因 SSR → Hydration 时序而重复播放。
 
-```css
-.clip-reveal.is-hovering .clip-layer--gray {
-  clip-path: polygon(0 0, var(--cp) 0, var(--cp) 100%, 0 100%);
-}
-.clip-reveal.is-hovering .clip-layer--tex {
-  clip-path: polygon(var(--cp) 0, 100% 0, 100% 100%, var(--cp) 100%);
-}
-```
+### 动画时序控制
+首页动画使用 `heroReady` 门控模式：SSR 阶段元素以 `opacity-0` 渲染，客户端挂载后统一触发 CSS Keyframe 动画，彻底消除 SSR 水合导致的动画重播问题。
 
-此方案消除了旧版自动旋转方案中 13 个并发 WebGL 渲染循环。
+### Nuxt 4 目录结构
+采用 Nuxt 4 标准 `app/` + `shared/` + `server/` 三层结构。`shared/types/` 自动导入，App 和 Server 共享类型定义。
 
-### 3. Three.js 查看器性能优化
-
-3D 模型查看器页面应用了多项从生产级 3D Web 应用中总结的优化策略：
-
-**移除阴影贴图** — `renderer.shadowMap.enabled = false` 消除了逐光源深度 Pass（会重新渲染整个场景）。对于模型预览场景，烘焙到纹理中的环境光遮蔽已足够。
-
-**OrbitControls 阻尼** — `enableDamping: true` 配合 `dampingFactor: 0.08` 为相机运动添加惯性，使旋转手感自然，且无额外渲染开销。
-
-**DPR 控制** — 将 `pixelRatio` 限制在 `Math.min(devicePixelRatio, 1.5)`，在 Retina 屏上避免 4 倍像素渲染开销。
-
-### 4. GSAP 动画系统
-
-GSAP 注册为 Nuxt 仅客户端插件，通过 `useGsap()` composable 提供实例。两个主要使用场景：
-
-**滚动触发画廊入场** — 每张卡片通过 `ScrollTrigger` 以交错的淡入 + translateY 动画入场：
-
-```ts
-gsap.from('.model-card', {
-  y: 60, opacity: 0, duration: 0.8,
-  stagger: 0.1,
-  scrollTrigger: { trigger: '.gallery-grid', start: 'top 80%' }
-})
-```
-
-**页面过渡** — `pageTransition.client.ts` 插件钩入 Nuxt 的 `page:transition:finish` 事件，在每次路由切换时运行 GSAP 入场动画，与 Vue 的 `<Transition>` CSS 协同工作。
-
-### 5. Hero 粒子系统（自定义 GLSL）
-
-首页 Hero 区域使用自定义 `ShaderMaterial` 渲染 GPU 驱动的粒子场：
-
-```glsl
-// 顶点着色器 — 每个粒子的位置在 GPU 上计算
-void main() {
-  vec3 pos = position;
-  pos.x += sin(uTime * 0.5 + position.y * 2.0) * 0.3;
-  pos.y += cos(uTime * 0.3 + position.x * 1.5) * 0.2;
-  gl_PointSize = uSize * (300.0 / length(mvPosition.xyz));
-  gl_Position = projectionMatrix * mvPosition;
-}
-```
-
-鼠标排斥效果逐帧计算：将光标位置作为 uniform 传入，在顶点着色器中计算距离，并在一定半径内推开粒子。
-
-### 6. 材质切换系统
-
-`useMaterialSwitcher` composable 使用 `WeakMap<Mesh, Material>` 存储原始 PBR 材质，并在运行时进行切换：
-
-```ts
-type MaterialMode = 'originalPbr' | 'matcapSilver' | 'whiteClay' | 'wireframe' | 'normal'
-```
-
-每种模式按需动态导入所需的 Three.js 类（`MeshStandardMaterial`、`MeshMatcapMaterial` 等）以实现代码分割。切换回 PBR 时从 WeakMap 中恢复原始材质。
-
-### 7. SSE（Server-Sent Events）驱动 AI 生成
-
-生成流程使用 SSE 替代轮询：
-
-```
-客户端: POST /api/generate { prompt, quality, textureEnabled, modelVersion }
-服务端: 建立 SSE 长连接，轮询 Tripo API 任务状态
-服务端: 推送进度事件 → data: { type: "progress", progress: 0-100 }
-服务端: 推送完成事件 → data: { type: "complete", task: ModelTask }
-客户端: stores/model.ts 通过 fetch + ReadableStream 解析 SSE 流
-```
-
-使用 `fetch` + `ReadableStream` 而非 `EventSource`，因为生成接口是 POST 请求（`EventSource` 只支持 GET）。Store 中手动解析 `data: ` 前缀的 SSE 协议行。
-
-### 8. GLB 模型管线
-
-所有 3D 模型使用 GLB 格式（二进制 glTF）并应用 meshopt 压缩。加载管线：
-
-```ts
-const loader = new GLTFLoader()
-loader.setMeshoptDecoder(MeshoptDecoder)  // 处理 meshopt 压缩的缓冲区
-loader.load(url, (gltf) => {
-  const model = gltf.scene
-  // 自动居中并归一化缩放
-  const box = new Box3().setFromObject(model)
-  model.position.sub(box.getCenter(new Vector3()))
-  model.scale.setScalar(2.0 / Math.max(...box.getSize(new Vector3()).toArray()))
-})
-```
-
-服务端通过 `proxy-model.get.ts` 代理外部 GLB URL 以绕过 CORS 限制，以流式传输二进制响应并设置正确的 `Content-Type: model/gltf-binary` 头。
-
-### 9. IntersectionObserver 模式
-
-项目中使用了两种 Observer 模式：
-
-**懒初始化** — 重型资源（WebGL 上下文、GLB 加载）延迟到元素首次进入视口时才初始化：
-
-```ts
-const initObserver = new IntersectionObserver(([entry]) => {
-  if (entry.isIntersecting) {
-    init()             // 一次性初始化
-    initObserver.disconnect()
-  }
-}, { threshold: 0.1 })
-```
-
-**基于可见性的暂停/恢复** — 对于确实需要持久渲染循环的组件，在离屏时暂停动画、进入视口时恢复，通过第二个 `threshold: 0.01` 的 Observer 实现。
-
-### 10. 国际化
-
-使用 `@nuxtjs/i18n`，策略为 `no_prefix`（URL 中不带语言前缀）。zh-CN 和 en 的语言 JSON 文件按需懒加载。所有面向用户的字符串在模板中使用 `$t('key')`。Header 中的语言切换器切换 `locale.value`，触发所有翻译字符串的重新渲染。
+### 性能优化
+- 移除阴影贴图，环境光遮蔽由纹理烘焙提供
+- DPR 限制 `Math.min(devicePixelRatio, 1.5)` 避免 Retina 4x 开销
+- OrbitControls 阻尼（`dampingFactor: 0.08`）零额外渲染开销
+- Vite optimizeDeps 预构建 Three.js 依赖
+- 画廊快照渲染器：渲染后立即 `forceContextLoss()` 释放 GPU 资源
 
 ## 快速开始
 
@@ -225,7 +155,7 @@ pnpm install
 
 # 环境变量
 cp .env.example .env
-# 编辑 .env: NUXT_TRIPO_API_KEY=your_key
+# 编辑 .env 设置 API Key
 
 # 开发模式
 pnpm dev
@@ -235,11 +165,17 @@ pnpm build
 
 # 预览生产构建
 pnpm preview
+
+# 类型检查
+pnpm typecheck
+
+# 代码检查
+pnpm lint
 ```
 
 ## 部署
 
-针对 Vercel 优化。在 Vercel 控制台中设置 `NUXT_TRIPO_API_KEY` 和 `NUXT_TRIPO_API_BASE`，然后通过 `git push` 部署即可。
+针对 Vercel 优化。在 Vercel 控制台中设置环境变量 `NUXT_API_KEY_3D` 和 `NUXT_API_BASE_3D`，然后通过 `git push` 部署即可。
 
 ## 许可证
 

@@ -1,5 +1,4 @@
 import { z } from 'zod'
-import type { ModelTask } from '~/types/model'
 
 const GenerateSchema = z.object({
   prompt: z.string().min(1).max(1000),
@@ -41,14 +40,14 @@ export default defineEventHandler(async (event) => {
   }
 
   // Enhance prompt using PE system
-  const analysis = enhanceForTripo(params.prompt)
+  const analysis = enhancePrompt(params.prompt)
   console.log(`[PE] Original: "${params.prompt}" → Enhanced: "${analysis.enhancedPrompt}"`)
   console.log(`[PE] Category: ${analysis.category}, Style: ${analysis.style}`)
 
-  // Create a task with Tripo API
+  // Create a generation task
   let taskId: string
   try {
-    const taskData = await createTripoTask(analysis.enhancedPrompt, {
+    const taskData = await create3DTask(analysis.enhancedPrompt, {
       quality: params.quality,
       modelVersion: params.modelVersion,
     })
@@ -75,31 +74,31 @@ export default defineEventHandler(async (event) => {
     attempts++
 
     try {
-      const taskStatus = await getTripoTaskStatus(taskId)
+      const taskStatus = await get3DTaskStatus(taskId)
       const statusStr = taskStatus.status as string
-      // Tripo returns progress as a number (0-100) in the task data
-      const tripoProgress = taskStatus.progress ?? parseProgress(statusStr)
+      // Progress is returned as a number (0-100) in the task data
+      const apiProgress = taskStatus.progress ?? parseProgress(statusStr)
 
       if (attempts === 1 || attempts % 5 === 0) {
-        console.log(`[Tripo] Poll #${attempts}: status=${statusStr}, progress=${tripoProgress}`)
+        console.log(`[3DGen] Poll #${attempts}: status=${statusStr}, progress=${apiProgress}`)
       }
 
       sendSSE({
         type: 'progress',
-        progress: tripoProgress,
+        progress: apiProgress,
         status: statusStr,
       })
 
       if (statusStr === 'success') {
         isComplete = true
         const output = taskStatus.output || {}
-        console.log(`[Tripo] Task completed! Output keys: ${Object.keys(output).join(', ')}`)
-        console.log(`[Tripo] model URL: ${output.model}`)
-        console.log(`[Tripo] pbr_model URL: ${output.pbr_model}`)
-        console.log(`[Tripo] rendered_image URL: ${output.rendered_image}`)
+        console.log(`[3DGen] Task completed! Output keys: ${Object.keys(output).join(', ')}`)
+        console.log(`[3DGen] model URL: ${output.model}`)
+        console.log(`[3DGen] pbr_model URL: ${output.pbr_model}`)
+        console.log(`[3DGen] rendered_image URL: ${output.rendered_image}`)
 
-        // Tripo returns model URLs in output.model (GLB) and output.pbr_model (PBR GLB)
-        // Proxy through our server to avoid CORS issues with Tripo's CDN
+        // Model URLs are in output.model (GLB) and output.pbr_model (PBR GLB)
+        // Proxy through our server to avoid CORS issues
         const rawModelUrl = output.pbr_model || output.model
         const modelUrl = rawModelUrl
           ? `/api/proxy-model?url=${encodeURIComponent(rawModelUrl)}`
@@ -108,7 +107,7 @@ export default defineEventHandler(async (event) => {
           ? `/api/proxy-model?url=${encodeURIComponent(output.rendered_image)}`
           : undefined
 
-        console.log(`[Tripo] Proxied model URL: ${modelUrl}`)
+        console.log(`[3DGen] Proxied model URL: ${modelUrl}`)
 
         const modelTask: ModelTask = {
           id: taskId,
@@ -127,7 +126,7 @@ export default defineEventHandler(async (event) => {
       }
       else if (statusStr === 'failed' || statusStr === 'cancelled' || statusStr === 'banned') {
         isComplete = true
-        console.error(`[Tripo] Task ${statusStr}: ${JSON.stringify(taskStatus)}`)
+        console.error(`[3DGen] Task ${statusStr}: ${JSON.stringify(taskStatus)}`)
         sendSSE({
           type: 'error',
           message: `Model generation ${statusStr}${taskStatus.message ? `: ${taskStatus.message}` : ''}`,
@@ -135,7 +134,7 @@ export default defineEventHandler(async (event) => {
       }
     }
     catch (error) {
-      console.error(`[Tripo] Error polling task status (attempt ${attempts}):`, error)
+      console.error(`[3DGen] Error polling task status (attempt ${attempts}):`, error)
       // Continue polling on transient error
     }
 
@@ -154,7 +153,7 @@ export default defineEventHandler(async (event) => {
 })
 
 function parseProgress(status: string): number {
-  // Tripo status values: queued, running, success, failed, cancelled, banned
+  // Status values: queued, running, success, failed, cancelled, banned
   const progressMap: Record<string, number> = {
     queued: 5,
     running: 50,

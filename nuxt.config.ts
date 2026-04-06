@@ -7,25 +7,6 @@ export default defineNuxtConfig({
     '@tresjs/nuxt',
   ],
 
-  // Shim unhead v1 API (getActiveHead) for @nuxtjs/i18n v8.x compatibility with unhead v2
-  vite: {
-    plugins: [
-      {
-        name: 'unhead-compat-shim',
-        transform(code: string, id: string) {
-          // Only patch the i18n composables file that imports getActiveHead
-          if (id.includes('@nuxtjs/i18n') && code.includes('getActiveHead')) {
-            return code
-              .replace(
-                `import { getActiveHead } from "unhead"`,
-                `import { injectHead as __injectHead } from "@unhead/vue"\nfunction getActiveHead() { try { return __injectHead() } catch { return null } }`,
-              )
-          }
-        },
-      },
-    ],
-  },
-
   app: {
     head: {
       title: '3DGenerator - AI 3D Model Generation',
@@ -51,8 +32,8 @@ export default defineNuxtConfig({
   },
 
   runtimeConfig: {
-    tripoApiKey: '',
-    tripoApiBase: 'https://api.tripo3d.ai',
+    apiKey3d: '',
+    apiBase3d: 'https://api.tripo3d.ai',
   },
 
   i18n: {
@@ -62,13 +43,21 @@ export default defineNuxtConfig({
     ],
     defaultLocale: 'zh-CN',
     strategy: 'no_prefix',
-    langDir: 'locales/',
-    lazy: true,
+  },
+
+  vite: {
+    optimizeDeps: {
+      include: [
+        'three',
+        'three/examples/jsm/loaders/GLTFLoader.js',
+        'three/examples/jsm/libs/meshopt_decoder.module.js',
+      ],
+    },
   },
 
   devtools: {
     enabled: true,
   },
 
-  compatibilityDate: '2024-12-01',
+  compatibilityDate: '2025-04-06',
 })

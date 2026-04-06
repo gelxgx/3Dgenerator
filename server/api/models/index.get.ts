@@ -1,7 +1,6 @@
 import { readdirSync } from 'node:fs'
 import { join } from 'node:path'
 import process from 'node:process'
-import type { GalleryModel } from '~/types/model'
 
 // Known model metadata — category & faceAngle overrides for existing files
 const MODEL_META: Record<string, { category: string, faceAngle?: number }> = {

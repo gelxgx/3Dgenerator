@@ -37,7 +37,7 @@ function buildGLB(vertices, indices, baseColor = [0.8, 0.8, 0.8, 1.0]) {
   const totalBinBytes = vertexBytes + indexBytesPadded
 
   const gltfJson = {
-    asset: { version: '2.0', generator: 'TripoLite Sample Generator' },
+    asset: { version: '2.0', generator: '3DGenerator Sample' },
     scene: 0,
     scenes: [{ nodes: [0] }],
     nodes: [{ mesh: 0 }],

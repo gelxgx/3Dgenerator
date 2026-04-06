@@ -1,43 +1,9 @@
 /**
- * Prompt Engineering (PE) for 3D Model Generation
+ * Prompt engineering for 3D model generation.
  *
- * Based on reverse-engineering Tripo's approach:
- * - Tripo auto-classifies prompts into category, style, project_name
- * - Tripo Studio uses two-step: text→image→3D for high-precision models
- * - The API text_to_model accepts free-form prompts directly
- *
- * This PE system enhances user prompts for better 3D model generation results,
- * both for Tripo API and for Codex (text→image→3D) fallback.
+ * Enhances user prompts for better results with the text-to-3D API
+ * and for optional text→image→3D fallback flows.
  */
-
-// Categories based on Tripo's auto-classification
-const CATEGORIES = [
-  'creatures & animals',
-  'characters & humanoids',
-  'vehicles & transportation',
-  'architecture & buildings',
-  'furniture & interior',
-  'weapons & tools',
-  'food & beverage',
-  'nature & environment',
-  'electronics & gadgets',
-  'fashion & accessories',
-  'abstract & artistic',
-  'mechanical & industrial',
-] as const
-
-const STYLES = [
-  'realistic',
-  'cartoon',
-  'low-poly',
-  'stylized',
-  'anime',
-  'voxel',
-  'miniature',
-  'sci-fi',
-  'fantasy',
-  'hand-painted',
-] as const
 
 export interface PromptAnalysis {
   originalPrompt: string
@@ -49,14 +15,14 @@ export interface PromptAnalysis {
 }
 
 /**
- * Enhance a user prompt for Tripo's text_to_model API.
- * Tripo works best with clear, descriptive prompts that specify:
+ * Enhance a user prompt for the text-to-3D API.
+ * The API works best with clear, descriptive prompts that specify:
  * - What the object is
  * - Its style/aesthetic
  * - Key visual details
  * - Pose/orientation (for characters/creatures)
  */
-export function enhanceForTripo(userPrompt: string): PromptAnalysis {
+export function enhancePrompt(userPrompt: string): PromptAnalysis {
   const trimmed = userPrompt.trim()
   const lower = trimmed.toLowerCase()
 
@@ -69,8 +35,6 @@ export function enhanceForTripo(userPrompt: string): PromptAnalysis {
   // Generate project name (simplified version)
   const projectName = generateProjectName(trimmed)
 
-  // Enhance the prompt for Tripo
-  // Tripo does well with concise, specific prompts. Don't over-engineer.
   let enhanced = trimmed
 
   // If the prompt is very short (< 20 chars), add helpful context
@@ -99,7 +63,7 @@ export function enhanceForTripo(userPrompt: string): PromptAnalysis {
  * - Specify materials and textures
  */
 export function enhanceForCodexImage(userPrompt: string): PromptAnalysis {
-  const analysis = enhanceForTripo(userPrompt)
+  const analysis = enhancePrompt(userPrompt)
 
   // Create an image prompt specifically designed for 3D reconstruction
   const imagePrompt = buildImagePrompt(analysis)
@@ -110,6 +74,7 @@ export function enhanceForCodexImage(userPrompt: string): PromptAnalysis {
   }
 }
 
+// Category classification
 function detectCategory(lower: string): string {
   const categoryKeywords: Record<string, string[]> = {
     'creatures & animals': ['cat', 'dog', 'animal', 'creature', 'dragon', 'bird', 'fish', 'monster', 'pet', 'wolf', 'bear', 'rabbit', 'fox', 'dinosaur', 'horse', 'lion', 'tiger', 'elephant', 'snake', 'insect'],
@@ -157,15 +122,15 @@ function detectStyle(lower: string): string {
 }
 
 function generateProjectName(prompt: string): string {
-  // Generate a short project name from the prompt (like Tripo does)
-  return prompt
+  // Generate a short project name from the prompt
+  return `${prompt
     .toLowerCase()
     .replace(/[^a-z0-9\s]/g, '')
     .split(/\s+/)
     .slice(0, 5)
     .join(' ')
     .trim()
-    + ' 3d model'
+  } 3d model`
 }
 
 function addContextualDetail(prompt: string, category: string, style: string): string {
