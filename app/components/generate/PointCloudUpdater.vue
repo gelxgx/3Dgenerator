@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import type { Points, ShaderMaterial } from 'three'
-import { useRenderLoop } from '@tresjs/core'
+import { useLoop } from '@tresjs/core'
 import { toRaw } from 'vue'
 
 const props = defineProps<{
@@ -10,7 +10,7 @@ const props = defineProps<{
   maxParticles: number
 }>()
 
-const { onLoop } = useRenderLoop()
+const { onLoop } = useLoop()
 
 const rawMaterial = computed(() => toRaw(props.material))
 const rawPoints = computed(() => toRaw(props.points))

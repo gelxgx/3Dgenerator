@@ -1,11 +1,11 @@
 <script setup lang="ts">
-import { useRenderLoop } from '@tresjs/core'
+import { useLoop } from '@tresjs/core'
 
 const props = defineProps<{
   updateFn: (delta: number) => void
 }>()
 
-const { onLoop } = useRenderLoop()
+const { onLoop } = useLoop()
 
 onLoop(({ delta }) => {
   props.updateFn(delta)
