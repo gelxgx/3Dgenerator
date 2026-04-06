@@ -3,6 +3,11 @@ import type { ModelTask } from '~/types/model'
 
 const props = defineProps<{
   modelData: ModelTask
+  isExporting?: boolean
+}>()
+
+const emit = defineEmits<{
+  export: [format: string]
 }>()
 
 const { t, locale } = useI18n()
@@ -109,14 +114,39 @@ function downloadModel() {
       </div>
     </div>
 
-    <div class="pt-4 border-t border-border">
+    <div v-if="modelData.modelUrl" class="pt-4 border-t border-border space-y-2">
       <button
-        v-if="modelData.modelUrl"
+        :disabled="isExporting"
         class="btn-primary w-full text-sm flex items-center justify-center gap-2"
+        :class="isExporting ? 'opacity-60 cursor-not-allowed' : ''"
+        @click="emit('export', 'glb')"
+      >
+        <div v-if="isExporting" class="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+        <i v-else class="i-carbon-download" />
+        {{ isExporting ? t('viewer.exporting') : t('viewer.exportGLB') }}
+      </button>
+      <div class="flex gap-2">
+        <button
+          :disabled="isExporting"
+          class="flex-1 py-2 rounded-lg text-xs font-500 border border-border text-text-secondary hover:text-text hover:border-primary/40 transition-colors cursor-pointer"
+          @click="emit('export', 'obj')"
+        >
+          OBJ
+        </button>
+        <button
+          :disabled="isExporting"
+          class="flex-1 py-2 rounded-lg text-xs font-500 border border-border text-text-secondary hover:text-text hover:border-primary/40 transition-colors cursor-pointer"
+          @click="emit('export', 'stl')"
+        >
+          STL
+        </button>
+      </div>
+      <button
+        class="w-full py-2 rounded-lg text-xs font-500 border border-border text-text-secondary hover:text-text hover:border-primary/40 transition-colors cursor-pointer"
         @click="downloadModel"
       >
-        <i class="i-carbon-download" />
-        {{ $t('viewer.download') }}
+        <i class="i-carbon-download text-xs mr-1" />
+        {{ $t('viewer.downloadOriginal') }}
       </button>
     </div>
   </div>

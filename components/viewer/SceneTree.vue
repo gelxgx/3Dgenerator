@@ -80,13 +80,13 @@ function handleSelect(obj: Object3D, path: string) {
 </script>
 
 <template>
-  <div class="p-4 text-xs">
-    <h4 class="text-sm font-600 text-text mb-3 flex items-center gap-2">
-      <i class="i-carbon-tree-view-alt text-primary-light" />
+  <div class="p-4">
+    <h4 class="text-sm font-600 text-text mb-4 flex items-center gap-2 px-1">
+      <i class="i-carbon-tree-view-alt text-primary-light text-base" />
       {{ t('viewer.sceneTree') }}
     </h4>
 
-    <div v-if="treeData.length === 0" class="text-text-tertiary py-4 text-center">
+    <div v-if="treeData.length === 0" class="text-text-tertiary text-xs py-6 text-center">
       {{ t('viewer.noScene') }}
     </div>
 

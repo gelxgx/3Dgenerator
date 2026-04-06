@@ -9,9 +9,11 @@ const props = withDefaults(defineProps<{
   modelUrl: string | null
   materialMode?: string
   showGrid?: boolean
+  animationUpdateFn?: ((delta: number) => void) | null
 }>(), {
   materialMode: 'originalPbr',
   showGrid: true,
+  animationUpdateFn: null,
 })
 
 const emit = defineEmits<{
@@ -89,6 +91,11 @@ defineExpose({
           v-if="modelScene"
           :scene="modelScene"
           @mesh-selected="(info) => emit('meshSelected', info)"
+        />
+
+        <AnimationMixerUpdater
+          v-if="animationUpdateFn"
+          :update-fn="animationUpdateFn"
         />
       </TresCanvas>
 

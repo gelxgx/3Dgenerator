@@ -2,6 +2,7 @@
 import type { Mesh, Object3D } from 'three'
 import type { GalleryModel, ModelTask } from '~/types/model'
 import type { MeshInfo } from '~/composables/useModelInteraction'
+import type { ExportFormat } from '~/composables/useModelExport'
 
 definePageMeta({
   layout: 'default',
@@ -55,7 +56,7 @@ if (!isDemoModel && import.meta.server) {
     apiModel.value = data.value
   }
   catch {
-    // Model might be in client-side store, don't fail on SSR
+    // Model might be in client-side store
   }
   finally {
     pending.value = false
@@ -68,12 +69,18 @@ const modelTask = computed(() => {
 
 const viewerRef = ref<{ modelScene: any, model: any } | null>(null)
 const viewerScene = computed(() => viewerRef.value?.modelScene ?? null)
+const viewerGltf = computed(() => viewerRef.value?.model ?? null)
 
 const selectedMeshInfo = ref<MeshInfo | null>(null)
+const selectedMeshObj = shallowRef<Mesh | null>(null)
 const showGrid = ref(true)
-const activeTab = ref<'info' | 'scene'>('info')
+const activeTab = ref<'info' | 'scene' | 'animation' | 'segments' | 'material'>('info')
 
 const explode = useExplodeView(viewerScene)
+const skeleton = useSkeletonViewer(viewerScene)
+const animation = useAnimationPlayer(viewerGltf)
+const segmentation = useSegmentation(viewerScene)
+const modelExport = useModelExport(viewerScene)
 
 function handleMeshSelected(info: MeshInfo | null) {
   selectedMeshInfo.value = info
@@ -88,14 +95,27 @@ function handleSceneNodeSelect(obj: Object3D) {
       : geo.attributes.position.count / 3
     const mat = Array.isArray(mesh.material) ? mesh.material[0] : mesh.material
     selectedMeshInfo.value = {
-      name: mesh.name || 'Unnamed Mesh',
+      name: mesh.name || t('viewer.unnamed'),
       faceCount: Math.floor(faceCount),
       vertexCount: geo.attributes.position.count,
-      materialName: mat?.name || mat?.type || 'Unknown',
+      materialName: mat?.name || mat?.type || t('viewer.material'),
     }
-    activeTab.value = 'info'
+    selectedMeshObj.value = mesh
   }
 }
+
+function handleExport(format: string) {
+  const name = modelTask.value?.prompt?.slice(0, 20) || 'model'
+  modelExport.exportModel(format as ExportFormat, name)
+}
+
+const tabs = computed(() => [
+  { key: 'info' as const, icon: 'i-carbon-information', label: t('viewer.tabInfo') },
+  { key: 'scene' as const, icon: 'i-carbon-tree-view-alt', label: t('viewer.tabScene') },
+  { key: 'animation' as const, icon: 'i-carbon-video', label: t('viewer.tabAnimation') },
+  { key: 'segments' as const, icon: 'i-carbon-chart-treemap', label: t('viewer.tabSegments') },
+  { key: 'material' as const, icon: 'i-carbon-paint-brush', label: t('viewer.tabMaterial') },
+])
 </script>
 
 <template>
@@ -167,6 +187,7 @@ function handleSceneNodeSelect(obj: Object3D) {
         :model-url="modelTask.modelUrl || null"
         :material-mode="selectedMaterial"
         :show-grid="showGrid"
+        :animation-update-fn="animation.hasAnimations.value ? animation.update : null"
         @mesh-selected="handleMeshSelected"
       />
 
@@ -207,21 +228,19 @@ function handleSceneNodeSelect(obj: Object3D) {
       class="w-80 bg-dark-surface/70 backdrop-blur-xl border-l border-border flex flex-col overflow-hidden"
     >
       <!-- Tab Bar -->
-      <div class="flex bg-dark-surface border-b border-border flex-shrink-0">
+      <div class="flex items-center gap-1 px-2 py-2 bg-dark-surface border-b border-border flex-shrink-0">
         <button
-          v-for="tab in ([
-            { key: 'info', icon: 'i-carbon-information', label: t('viewer.tabInfo') },
-            { key: 'scene', icon: 'i-carbon-tree-view-alt', label: t('viewer.tabScene') },
-          ] as const)"
+          v-for="tab in tabs"
           :key="tab.key"
-          class="flex-1 flex items-center justify-center gap-1.5 py-3 text-xs font-500 transition-colors border-b-2"
+          :title="tab.label"
+          class="flex-1 flex flex-col items-center gap-0.5 py-1.5 rounded-lg text-[10px] font-500 transition-all duration-200 cursor-pointer"
           :class="activeTab === tab.key
-            ? 'text-primary-light border-primary'
-            : 'text-text-tertiary border-transparent hover:text-text-secondary'"
+            ? 'bg-primary/12 text-primary-light shadow-sm shadow-primary/8'
+            : 'text-text-tertiary hover:text-text-secondary hover:bg-dark-surface-hover'"
           @click="activeTab = tab.key"
         >
-          <i :class="tab.icon" class="text-sm" />
-          {{ tab.label }}
+          <i :class="tab.icon" class="text-base" />
+          <span>{{ tab.label }}</span>
         </button>
       </div>
 
@@ -229,7 +248,11 @@ function handleSceneNodeSelect(obj: Object3D) {
       <div class="flex-1 overflow-y-auto">
         <!-- Info Tab -->
         <template v-if="activeTab === 'info'">
-          <ModelInfo :model-data="modelTask" />
+          <ModelInfo
+            :model-data="modelTask"
+            :is-exporting="modelExport.isExporting.value"
+            @export="handleExport"
+          />
 
           <!-- Selected Part Info -->
           <div
@@ -267,6 +290,44 @@ function handleSceneNodeSelect(obj: Object3D) {
             :scene="viewerScene"
             @select-node="handleSceneNodeSelect"
           />
+        </template>
+
+        <!-- Animation Tab -->
+        <template v-if="activeTab === 'animation'">
+          <AnimationPanel
+            :clips="animation.clips.value"
+            :current-clip-name="animation.currentClipName.value"
+            :is-playing="animation.isPlaying.value"
+            :playback-speed="animation.playbackSpeed.value"
+            :current-time="animation.currentTime.value"
+            :duration="animation.duration.value"
+            :has-animations="animation.hasAnimations.value"
+            :has-skeleton="skeleton.hasSkeleton.value"
+            :skeleton-visible="skeleton.isVisible.value"
+            :bone-count="skeleton.boneCount.value"
+            @select-clip="animation.selectClip"
+            @toggle-play="animation.togglePlay"
+            @set-speed="animation.setSpeed"
+            @seek="animation.seek"
+            @toggle-skeleton="skeleton.toggle"
+          />
+        </template>
+
+        <!-- Segments Tab -->
+        <template v-if="activeTab === 'segments'">
+          <SegmentPanel
+            :segments="segmentation.segments.value"
+            :is-active="segmentation.isActive.value"
+            @toggle="segmentation.toggle"
+            @toggle-visibility="segmentation.toggleVisibility"
+            @highlight="segmentation.highlightSegment"
+            @unhighlight="segmentation.unhighlightSegment"
+          />
+        </template>
+
+        <!-- Material Tab -->
+        <template v-if="activeTab === 'material'">
+          <MaterialEditor :selected-mesh="selectedMeshObj" />
         </template>
       </div>
     </div>

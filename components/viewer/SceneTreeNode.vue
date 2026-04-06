@@ -41,38 +41,42 @@ function getIcon(type: string) {
 <template>
   <div>
     <div
-      class="flex items-center gap-1.5 py-1.5 px-2 rounded-lg cursor-pointer group transition-all duration-150"
-      :style="{ paddingLeft: `${depth * 14 + 8}px` }"
+      class="flex items-center gap-2 py-2 px-2 rounded-lg cursor-pointer group transition-all duration-150"
+      :style="{ paddingLeft: `${depth * 16 + 10}px` }"
       :class="[
         isSelected
-          ? 'bg-primary/15 border border-primary/25'
-          : 'hover:bg-dark-surface-hover border border-transparent',
+          ? 'bg-primary/15 ring-1 ring-primary/30'
+          : 'hover:bg-dark-surface-hover',
       ]"
       @click="emit('select', node.object, path)"
     >
       <button
         v-if="hasChildren"
-        class="w-4 h-4 flex-center text-text-tertiary shrink-0"
+        class="w-5 h-5 flex-center text-text-tertiary shrink-0 hover:text-text transition-colors"
         @click.stop="emit('toggleExpand', path)"
       >
-        <i :class="isExpanded ? 'i-carbon-chevron-down' : 'i-carbon-chevron-right'" class="text-xs" />
+        <i
+          :class="isExpanded ? 'i-carbon-chevron-down' : 'i-carbon-chevron-right'"
+          class="text-sm transition-transform duration-150"
+        />
       </button>
-      <span v-else class="w-4 shrink-0" />
+      <span v-else class="w-5 shrink-0" />
 
       <button
-        class="w-4 h-4 flex-center shrink-0"
-        :class="node.visible ? 'text-text-secondary' : 'text-text-tertiary/40'"
+        class="w-5 h-5 flex-center shrink-0 transition-colors"
+        :class="node.visible ? 'text-text-secondary hover:text-text' : 'text-text-tertiary/40 hover:text-text-tertiary'"
         @click.stop="emit('toggleVisible', node)"
       >
-        <i :class="node.visible ? 'i-carbon-view' : 'i-carbon-view-off'" class="text-xs" />
+        <i :class="node.visible ? 'i-carbon-view' : 'i-carbon-view-off'" class="text-sm" />
       </button>
 
       <i
-        class="text-xs shrink-0" :class="[getIcon(node.type), isSelected ? 'text-primary-light' : 'text-text-tertiary']"
+        class="text-sm shrink-0"
+        :class="[getIcon(node.type), isSelected ? 'text-primary-light' : 'text-text-tertiary']"
       />
       <span
-        class="text-xs truncate flex-1"
-        :class="isSelected ? 'text-primary-light font-500' : 'text-text-secondary group-hover:text-text'"
+        class="text-[13px] truncate flex-1"
+        :class="isSelected ? 'text-primary-light font-600' : 'text-text-secondary group-hover:text-text'"
       >
         {{ node.name }}
       </span>
