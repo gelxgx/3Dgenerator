@@ -25,7 +25,6 @@ const demoModel = computed(() => {
   const found = galleryData.value.items.find((m: GalleryModel) => m.id === modelId)
   if (!found)
     return null
-  // Convert GalleryModel to ModelTask-like object
   return {
     id: found.id,
     status: 'completed' as const,
@@ -51,10 +50,24 @@ const modelTask = computed(() => {
   return demoModel.value || storeModel || apiModel.value || null
 })
 
+// --- Interaction state ---
+const viewerRef = ref<{ modelScene: any, model: any } | null>(null)
+const viewerScene = computed(() => viewerRef.value?.modelScene ?? null)
+
 const selectedMeshInfo = ref<MeshInfo | null>(null)
+const activeMode = ref<'select' | 'measure'>('select')
+const showGrid = ref(true)
+const activeTab = ref<'info' | 'scene'>('info')
+
+// Composables driven by scene
+const explode = useExplodeView(viewerScene)
 
 function handleMeshSelected(info: MeshInfo | null) {
   selectedMeshInfo.value = info
+}
+
+function handleModeChange(mode: 'select' | 'measure') {
+  activeMode.value = mode
 }
 </script>
 
@@ -124,13 +137,26 @@ function handleMeshSelected(info: MeshInfo | null) {
     <!-- Center - 3D Viewport -->
     <div v-if="modelTask" class="flex-1 relative">
       <ModelViewer
+        ref="viewerRef"
         :model-url="modelTask.modelUrl || null"
         :material-mode="selectedMaterial"
         @mesh-selected="handleMeshSelected"
       />
 
+      <!-- Floating Toolbar -->
+      <ViewerToolbar
+        :active-mode="activeMode"
+        :is-exploded="explode.isExploded.value"
+        :can-explode="explode.canExplode.value"
+        :show-grid="showGrid"
+        @update:active-mode="handleModeChange"
+        @toggle-explode="explode.toggleExplode()"
+        @update:show-grid="showGrid = $event"
+        @clear-measurements="() => {}"
+      />
+
       <!-- Model name overlay -->
-      <div class="absolute top-4 left-4 z-10">
+      <div class="absolute top-14 left-4 z-10">
         <div class="px-3 py-1.5 rounded-lg bg-dark/60 backdrop-blur-md text-xs text-text-secondary border border-border/50">
           {{ modelTask.prompt?.slice(0, 40) }}
         </div>
@@ -159,40 +185,72 @@ function handleMeshSelected(info: MeshInfo | null) {
       </NuxtLink>
     </div>
 
-    <!-- Right Panel - Model Info -->
+    <!-- Right Panel - Tabbed -->
     <div
       v-if="modelTask"
-      class="w-80 bg-dark-surface/70 backdrop-blur-xl border-l border-border overflow-y-auto"
+      class="w-80 bg-dark-surface/70 backdrop-blur-xl border-l border-border flex flex-col overflow-hidden"
     >
-      <ModelInfo :model-data="modelTask" />
+      <!-- Tab Bar -->
+      <div class="flex border-b border-border flex-shrink-0">
+        <button
+          v-for="tab in ([
+            { key: 'info', icon: 'i-carbon-information', label: 'Info' },
+            { key: 'scene', icon: 'i-carbon-tree-view-alt', label: 'Scene' },
+          ] as const)"
+          :key="tab.key"
+          class="flex-1 flex items-center justify-center gap-1.5 py-3 text-xs font-500 transition-colors border-b-2"
+          :class="activeTab === tab.key
+            ? 'text-primary-light border-primary'
+            : 'text-text-tertiary border-transparent hover:text-text-secondary'"
+          @click="activeTab = tab.key"
+        >
+          <i :class="tab.icon" class="text-sm" />
+          {{ tab.label }}
+        </button>
+      </div>
 
-      <!-- Selected Part Info -->
-      <div
-        v-if="selectedMeshInfo"
-        class="p-6 border-t border-border space-y-3"
-      >
-        <h4 class="text-sm font-600 text-text flex items-center gap-2">
-          <i class="i-carbon-touch-1 text-primary-light" />
-          Selected Part
-        </h4>
-        <div class="space-y-2 text-xs">
-          <div class="flex justify-between">
-            <span class="text-text-tertiary">Name</span>
-            <span class="text-text font-500">{{ selectedMeshInfo.name }}</span>
+      <!-- Tab Content -->
+      <div class="flex-1 overflow-y-auto">
+        <!-- Info Tab -->
+        <template v-if="activeTab === 'info'">
+          <ModelInfo :model-data="modelTask" />
+
+          <!-- Selected Part Info -->
+          <div
+            v-if="selectedMeshInfo"
+            class="p-6 border-t border-border space-y-3"
+          >
+            <h4 class="text-sm font-600 text-text flex items-center gap-2">
+              <i class="i-carbon-touch-1 text-primary-light" />
+              Selected Part
+            </h4>
+            <div class="space-y-2 text-xs">
+              <div class="flex justify-between">
+                <span class="text-text-tertiary">Name</span>
+                <span class="text-text font-500">{{ selectedMeshInfo.name }}</span>
+              </div>
+              <div class="flex justify-between">
+                <span class="text-text-tertiary">Faces</span>
+                <span class="text-text font-500 tabular-nums">{{ selectedMeshInfo.faceCount.toLocaleString() }}</span>
+              </div>
+              <div class="flex justify-between">
+                <span class="text-text-tertiary">Vertices</span>
+                <span class="text-text font-500 tabular-nums">{{ selectedMeshInfo.vertexCount.toLocaleString() }}</span>
+              </div>
+              <div class="flex justify-between">
+                <span class="text-text-tertiary">Material</span>
+                <span class="text-text font-500">{{ selectedMeshInfo.materialName }}</span>
+              </div>
+            </div>
           </div>
-          <div class="flex justify-between">
-            <span class="text-text-tertiary">Faces</span>
-            <span class="text-text font-500 tabular-nums">{{ selectedMeshInfo.faceCount.toLocaleString() }}</span>
-          </div>
-          <div class="flex justify-between">
-            <span class="text-text-tertiary">Vertices</span>
-            <span class="text-text font-500 tabular-nums">{{ selectedMeshInfo.vertexCount.toLocaleString() }}</span>
-          </div>
-          <div class="flex justify-between">
-            <span class="text-text-tertiary">Material</span>
-            <span class="text-text font-500">{{ selectedMeshInfo.materialName }}</span>
-          </div>
-        </div>
+        </template>
+
+        <!-- Scene Tab -->
+        <template v-if="activeTab === 'scene'">
+          <SceneTree
+            :scene="viewerScene"
+          />
+        </template>
       </div>
     </div>
   </div>
