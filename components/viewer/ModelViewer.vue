@@ -3,6 +3,7 @@ import { OrbitControls } from '@tresjs/cientos'
 import type { Group } from 'three'
 import { Box3, Vector3 } from 'three'
 import { toRaw } from 'vue'
+import type { MeshInfo } from '~/composables/useModelInteraction'
 
 const props = withDefaults(defineProps<{
   modelUrl: string | null
@@ -10,6 +11,10 @@ const props = withDefaults(defineProps<{
 }>(), {
   materialMode: 'originalPbr',
 })
+
+const emit = defineEmits<{
+  meshSelected: [info: MeshInfo | null]
+}>()
 
 const { model, isLoading, error: loadError } = useGLTFLoader(toRef(() => props.modelUrl))
 
@@ -31,11 +36,16 @@ watch(model, (gltf) => {
   const center = box3.getCenter(new Vector3())
   scene.position.sub(center)
 
-  modelScene.value = scene
+  modelScene.value = scene as Group
 }, { immediate: true })
 
 const materialModeRef = toRef(() => props.materialMode)
 useMaterialSwitcher(modelScene, materialModeRef)
+
+defineExpose({
+  modelScene,
+  model,
+})
 </script>
 
 <template>
@@ -72,6 +82,12 @@ useMaterialSwitcher(modelScene, materialModeRef)
         <TresGridHelper :args="[10, 10, '#1A1A2E', '#151528']" />
 
         <primitive v-if="!isLoading && modelScene" :object="modelScene" />
+
+        <ViewerInteractionHandler
+          v-if="modelScene"
+          :scene="modelScene"
+          @mesh-selected="(info) => emit('meshSelected', info)"
+        />
       </TresCanvas>
 
       <!-- Empty state -->
