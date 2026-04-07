@@ -5,9 +5,9 @@ const props = defineProps<{
   updateFn: (delta: number) => void
 }>()
 
-const { onLoop } = useLoop()
+const { onBeforeRender } = useLoop()
 
-onLoop(({ delta }) => {
+onBeforeRender(({ delta }) => {
   props.updateFn(delta)
 })
 </script>

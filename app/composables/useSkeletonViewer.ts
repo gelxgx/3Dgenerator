@@ -26,19 +26,22 @@ export function useSkeletonViewer(scene: Ref<Object3D | null> | ShallowRef<Objec
   async function show() {
     if (!hasSkeleton.value || !scene.value)
       return
-    const first = skinnedMeshes[0]
-    if (!first)
+    // SkeletonHelper 必须挂在根 Scene 上，而非 model group；
+    // 若挂在有位移的 model group 上，构造时 this.matrix = object.matrixWorld
+    // 会与 parent.matrixWorld 双重叠加，导致骨骼位置偏移。
+    const rootScene = scene.value.parent
+    if (!rootScene)
       return
     const { SkeletonHelper: SH } = await import('three')
-    skeletonHelper = new SH(first)
+    skeletonHelper = new SH(scene.value)
     skeletonHelper.userData.__helper = true
-    scene.value.add(skeletonHelper)
+    rootScene.add(skeletonHelper)
     isVisible.value = true
   }
 
   function hide() {
-    if (skeletonHelper && scene.value) {
-      scene.value.remove(skeletonHelper)
+    if (skeletonHelper) {
+      skeletonHelper.parent?.remove(skeletonHelper)
       skeletonHelper.dispose()
       skeletonHelper = null
     }
